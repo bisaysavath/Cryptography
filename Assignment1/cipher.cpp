@@ -3,7 +3,7 @@
 #include "CipherInterface.h"
 #include "Playfair.h"
 #include "Railfence.h"
-
+#include "RowTransposition.h"
 using namespace std;
 
 int main(int argc, char** argv)
@@ -34,8 +34,12 @@ int main(int argc, char** argv)
 
 		/* Create an instance of the Railfence cipher */	
 		cipher = new Railfence();
-	  
 	}
+	else if (cipherName == "RTS")
+	{	/* Create an instance of the RowTransposition cipher */
+		cipher = new RowTransposition();		  
+	}
+	
 	else exit (-2);
   
 	/* Error checks */
@@ -78,7 +82,7 @@ int main(int argc, char** argv)
 			/* Perform decryption */
 			text = cipher->decrypt(line);
 		}
-
+		
 		outFile << text <<endl;
 	}
   
