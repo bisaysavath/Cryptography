@@ -46,8 +46,14 @@ bool Playfair::setKey(const string& key)
 string Playfair::encrypt(const string& plaintext)
 {
   
-  string text = plaintext;
-  text.erase(remove(text.begin(), text.end(), ' '), text.end());
+  string text = "";
+
+  // the plaintext should contains only letters
+  for ( int i = 0; i < plaintext.length(); i++){
+	  if ( isalpha(plaintext[i])) text.push_back(plaintext[i]);
+  }
+
+  // lowercase text
   transform(text.begin(), text.end(), text.begin(), ::tolower);
   pairType a_pair;
   vector<pairType> plainText;
@@ -121,7 +127,6 @@ string Playfair::decrypt(const string& cipherText)
   string text = cipherText;
   text.erase(remove(text.begin(), text.end(), ' '), text.end());
   transform(text.begin(), text.end(), text.begin(), ::tolower);
-  int i = 0;
   
   // Replace j with i
   size_t pos = 0;

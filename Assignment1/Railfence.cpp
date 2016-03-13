@@ -50,6 +50,8 @@ string Railfence::encrypt(const string& plaintext){
 		}
 	}
 
+	transform(text.begin(), text.end(), text.begin(), ::toupper);
+
 	return ciphertext;
 }
 
