@@ -116,7 +116,7 @@ string Vigenere::decrypt(const string& cipherText)
             }
         }
 
-        // Concat a found plaintext since we are using Vigenere Cipher withh autokey
+        // Concat a found plaintext to a key since we are using Vigenere Cipher with autokey
         this->key += vigenereSquare[0][foundAtCol];
         plaintext += vigenereSquare[0][foundAtCol];
     }
@@ -140,7 +140,7 @@ void Vigenere::createVigenereSqure(void)
     this->vigenereSquare = new char*[ALPHABETH_COUNT];
     
     for (int row = 0; row < ALPHABETH_COUNT; row++) {
-        // Allocate 26 cols on vigenereSquare's row
+        // Allocate 26 cols on each vigenereSquare's row
         this->vigenereSquare[row] = new char[ALPHABETH_COUNT];
         
         for (int col = 0; col < ALPHABETH_COUNT; col++)
