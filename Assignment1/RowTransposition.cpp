@@ -3,25 +3,17 @@
 #include <sstream>
 bool RowTransposition::setKey(const string& key)
 {
-	//create a vector to hold all the element of the key
 	vector <int> testKey;
-	int tempKey = 0;
-	// test the key if it has the numbers from 1-9	
-	if(key.find_first_not_of("123456789") == string::npos)
+	stringstream stream(key);
+	int Num;
+	if(key.find_first_not_of(" 0123456789") == string::npos)
 	{
-		// push all element of the key to vector testkey
-		for(int i = 0; i < key.length(); ++i)
+		while(stream >> Num)
 		{
-			//convert each of the string element to integer and
-			// add into vector testkey
-			char a = key.at(i);
-			int element = a - '0';
-			testKey.push_back(element);
-			//convert the key string to tempkey integer
-			tempKey = tempKey*10 + (key[i] -'0');
+			testKey.push_back(Num);
 		}
-		//sorted the test key
 		sort(testKey.begin(), testKey.end());
+	
 		// check if the first element of the testkey has to start with 1
 		if(testKey[0] == 1)
 		{	// test the whole testKey to know it is from least to greatest or ascending order
@@ -45,21 +37,26 @@ bool RowTransposition::setKey(const string& key)
 	{
 		return false;
 	}
+
 //make the keyNum = to the tempKey ( both in integer format)
-this->keyNum = tempKey;
+this->keyNum = key;
 return true;
 
 
 }
 
 string RowTransposition::encrypt(const string& plaintext)
-{	// convert the keyNum to string key
-	string key;
-	ostringstream convert;
-	convert << keyNum;
-	key = 	convert.str();
+{
+	
+	vector <int> key;
+	stringstream stream(this->keyNum);
+	int Num;
+	while(stream >> Num)
+	{
+		key.push_back(Num);
+	}
 	//col's length of matrix
-	col = key.length();
+	col = key.size();
 	//testRow represent to remainder of plaintext.length() and col
 	int testRow = plaintext.length() % col;
 	// create string ciphertext
@@ -92,13 +89,11 @@ string RowTransposition::encrypt(const string& plaintext)
 		}
 	}
 	//encrypt the plaintext by they key provided
-	for(unsigned int i = 0; i < key.length(); ++i)	
+	for(unsigned int i = 0; i < key.size(); ++i)	
 	{
-		char a = key.at(i);
-		int element = a - '0';
 		for(int j = 0; j < row; ++j)
 		{
-			ciphertext.push_back(this->matrix[j][element - 1]);
+			ciphertext.push_back(this->matrix[j][key[i] - 1]);
 		}
 	}
 	return ciphertext;
@@ -107,11 +102,14 @@ string RowTransposition::encrypt(const string& plaintext)
 //decrypt the ciphertext
 string RowTransposition::decrypt(const string& ciphertext)
 {	//convert the int keyNum(key provided) into string key for easy to use later
-	string key;
-	ostringstream convert;
-	convert << keyNum;
-	key = convert.str();
-	col = key.length();
+	vector<int> key;
+	stringstream stream(this->keyNum);
+	int Num;
+	while(stream >> Num)
+	{
+		key.push_back(Num);
+	}	
+	col = key.size();
 	row = ciphertext.length() / col;
 	string plaintext = "";
 	// create the matrix has row and col above
@@ -120,13 +118,11 @@ string RowTransposition::decrypt(const string& ciphertext)
 	unsigned int getThr = 0;
 	while(getThr < ciphertext.length())
 	{
-		for(unsigned int j = 0; j < key.length(); ++j)
+		for(unsigned int j = 0; j < key.size(); ++j)
 		{
-			char a = key.at(j);
-			int  element = a - '0';
 			for (int k = 0; k < row; ++k)
 			{
-				this->matrix[getThr % row][element - 1] = ciphertext[getThr];
+				this->matrix[getThr % row][key[j] - 1] = ciphertext[getThr];
 			++getThr;		//increase the element of the string ciphertext
 			}
 		}
