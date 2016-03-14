@@ -1,7 +1,7 @@
 all:	cipher
 
-cipher:	cipher.o Playfair.o Railfence.o RowTransposition.o
-	g++ cipher.o Playfair.o Railfence.o RowTransposition.o -o cipher
+cipher:	cipher.o Playfair.o Railfence.o RowTransposition.o Caesar.o
+	g++ cipher.o Playfair.o Railfence.o RowTransposition.o Caesar.o -o cipher
 
 cipher.o: cipher.cpp
 	g++ -c cipher.cpp 
@@ -15,6 +15,8 @@ Railfence.o: Railfence.h Railfence.cpp CipherInterface.h
 RowTransposition.o: RowTransposition.cpp RowTransposition.h CipherInterface.h
 	g++ -c RowTransposition.cpp
 
+Caesar.o: Caesar.cpp Caesar.h CipherInterface.h
+	g++ -c Caesar.cpp
 
 clean:
 	rm -rf *.o *~ cipher

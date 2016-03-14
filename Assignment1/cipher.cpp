@@ -4,6 +4,7 @@
 #include "Playfair.h"
 #include "Railfence.h"
 #include "RowTransposition.h"
+#include "Caesar.h"
 using namespace std;
 
 int main(int argc, char** argv)
@@ -39,6 +40,10 @@ int main(int argc, char** argv)
 	{	/* Create an instance of the RowTransposition cipher */
 		cipher = new RowTransposition();		  
 	}
+    else if (cipherName == "CES")
+    {
+        cipher = new Caesar();
+    }
 	
 	else exit (-2);
   
