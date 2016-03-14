@@ -50,7 +50,7 @@ public:
 
 	/* The private members */
 private:
-	int keyNum;
+	string keyNum;
 	int row;
 	int col;
 	char ** matrix;
