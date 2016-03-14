@@ -19,9 +19,12 @@ class CipherInterface
 		 */
 		CipherInterface(){}
 		
-		
-		/**
-		 * Sets the key to use
+		/** 
+		 * The default destructor
+		 */
+		virtual ~CipherInterface(){}
+
+		 /* Sets the key to use
 		 * @param key - the key to use
 		 * @return - True if the key is valid and False otherwise
 		 */
