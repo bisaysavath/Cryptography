@@ -4,6 +4,8 @@
 #include "Playfair.h"
 #include "Railfence.h"
 #include "Vigenere.h"
+#include "RowTransposition.h"
+#include "Caesar.h"
 
 using namespace std;
 
@@ -35,11 +37,19 @@ int main(int argc, char** argv)
 
 		/* Create an instance of the Railfence cipher */	
 		cipher = new Railfence();
-	  
 	}
 	else if ( cipherName == "VIG" ) {
 		/* Create an instance of the Vigenere cipher */	
 		cipher = new Vigenere();
+	}
+	else if (cipherName == "RTS")
+	{	/* Create an instance of the RowTransposition cipher */
+		cipher = new RowTransposition();		  
+	}
+	else if (cipherName == "CES")
+	{
+		/*Creating an instance of Caesar cipher */
+	        cipher = new Caesar();
 	}
 	else {
 		cout << "Couldn't identify a given cipher" << endl;
@@ -86,7 +96,7 @@ int main(int argc, char** argv)
 			/* Perform decryption */
 			text = cipher->decrypt(line);
 		}
-
+		
 		outFile << text <<endl;
 	}
 	
