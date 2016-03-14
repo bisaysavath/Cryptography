@@ -3,6 +3,7 @@
 #include "CipherInterface.h"
 #include "Playfair.h"
 #include "Railfence.h"
+#include "Vigenere.h"
 
 using namespace std;
 
@@ -36,7 +37,14 @@ int main(int argc, char** argv)
 		cipher = new Railfence();
 	  
 	}
-	else exit (-2);
+	else if ( cipherName == "VIG" ) {
+		/* Create an instance of the Vigenere cipher */	
+		cipher = new Vigenere();
+	}
+	else {
+		cout << "Couldn't identify a given cipher" << endl;
+		exit (-2);
+	}
   
 	/* Error checks */
 	if(!cipher)
@@ -81,7 +89,9 @@ int main(int argc, char** argv)
 
 		outFile << text <<endl;
 	}
-  
+	
+	delete cipher;
+  	inFile.close();
 	outFile.close();
 	cout << "Success!!" <<endl;
 	
