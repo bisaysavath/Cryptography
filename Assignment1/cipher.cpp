@@ -40,10 +40,11 @@ int main(int argc, char** argv)
 	{	/* Create an instance of the RowTransposition cipher */
 		cipher = new RowTransposition();		  
 	}
-    else if (cipherName == "CES")
-    {
-        cipher = new Caesar();
-    }
+	else if (cipherName == "CES")
+	{
+		/*Creating an instance of Caesar cipher */
+	        cipher = new Caesar();
+	}
 	
 	else exit (-2);
   
