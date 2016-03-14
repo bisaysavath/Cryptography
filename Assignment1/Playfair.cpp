@@ -92,24 +92,26 @@ string Playfair::encrypt(const string& plaintext)
     row_b = getRow(b);
     col_a = getCol(a);
     col_b = getCol(b);
-    if ( row_a == row_b ){
-      if ( col_a == MAXCOL ) a = matrix[row_a][MINCOL];
-      else a = matrix[row_a][col_a + 1];
-      if ( col_b == MAXCOL ) b = matrix[row_b][MINCOL];
-      else b = matrix[row_b][col_b+1];
+    if ( row_a != -1 && row_b != -1 && col_a != -1 && col_b != -1) {
+	    if ( row_a == row_b ){
+		    if ( col_a == MAXCOL ) a = matrix[row_a][MINCOL];
+		    else a = matrix[row_a][col_a + 1];
+		    if ( col_b == MAXCOL ) b = matrix[row_b][MINCOL];
+		    else b = matrix[row_b][col_b+1];
+	    }
+	    else if ( col_a == col_b ){
+		    if ( row_a  == MAXROW ) a = matrix[MINROW][col_a];
+		    else a = matrix[row_a+1][col_a];
+		    if ( row_b == MAXROW ) b = matrix[MINROW][col_b];
+		    else b = matrix[row_b+1][col_b];
+	    }
+	    else {
+		    a = matrix[row_a][col_b];
+		    b = matrix[row_b][col_a];
+	    }
+	    cipherText.push_back(a);
+	    cipherText.push_back(b);
     }
-    else if ( col_a == col_b ){
-      if ( row_a  == MAXROW ) a = matrix[MINROW][col_a];
-      else a = matrix[row_a+1][col_a];
-      if ( row_b == MAXROW ) b = matrix[MINROW][col_b];
-      else b = matrix[row_b+1][col_b];
-    }
-    else {
-      a = matrix[row_a][col_b];
-      b = matrix[row_b][col_a];
-    }
-    cipherText.push_back(a);
-    cipherText.push_back(b);
   }
 
   transform(cipherText.begin(), cipherText.end(), cipherText.begin(), ::toupper);
@@ -163,24 +165,26 @@ string Playfair::decrypt(const string& cipherText)
     row_b = getRow(b);
     col_a = getCol(a);
     col_b = getCol(b);
-    if ( row_a == row_b ){
-      if ( col_a == MINCOL ) a = matrix[row_a][MAXCOL];
-      else a = matrix[row_a][col_a-1];
-      if ( col_b == MINCOL ) b = matrix[row_b][MAXCOL];
-      else b = matrix[row_b][col_b-1];
+    if ( row_a != -1 && row_b != -1 && col_a != -1 && col_b != -1) {
+	    if ( row_a == row_b ){
+		    if ( col_a == MINCOL ) a = matrix[row_a][MAXCOL];
+		    else a = matrix[row_a][col_a-1];
+		    if ( col_b == MINCOL ) b = matrix[row_b][MAXCOL];
+		    else b = matrix[row_b][col_b-1];
+	    }
+	    else if ( col_a == col_b ){
+		    if ( row_a  == MINROW ) a = matrix[MAXROW][col_a];
+		    else a = matrix[row_a-1][col_a];
+		    if ( row_b == MINROW ) b = matrix[MAXROW][col_b];
+		    else b = matrix[row_b-1][col_b];
+	    }
+	    else {
+		    a = matrix[row_a][col_b];
+		    b = matrix[row_b][col_a];
+	    }
+	    plainText.push_back(a);
+	    plainText.push_back(b);
     }
-    else if ( col_a == col_b ){
-      if ( row_a  == MINROW ) a = matrix[MAXROW][col_a];
-      else a = matrix[row_a-1][col_a];
-      if ( row_b == MINROW ) b = matrix[MAXROW][col_b];
-      else b = matrix[row_b-1][col_b];
-    }
-    else {
-      a = matrix[row_a][col_b];
-      b = matrix[row_b][col_a];
-    }
-    plainText.push_back(a);
-    plainText.push_back(b);
   }
 
   return plainText; 
@@ -231,6 +235,9 @@ int Playfair::getRow(const char& letter){
       if ( letter == matrix[row][col] ) return row;
     }
   }
+
+  // It should never get here
+  return -1;
 }
 
 int Playfair::getCol(const char& letter){
@@ -239,4 +246,7 @@ int Playfair::getCol(const char& letter){
       if ( letter == matrix[row][col] ) return col;
     }
   }
+
+  // It should never get here
+  return -1;
 }
