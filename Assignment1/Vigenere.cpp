@@ -4,19 +4,6 @@ const int ALPHABETH_COUNT = 26;
 const int UPPER_ALPHA_ASCII_BEGIN = 65;
 const int OUTPUT_WIDTH = 15;
 
-/** Destructor **/
-Vigenere::~Vigenere()
-{
-   if (this->vigenereSquare) {
-       // Clean up Vigenere square's memory
-       for (int i = 0; i < ALPHABETH_COUNT; i++) {
-           delete [] this->vigenereSquare[i];
-       }
-   
-       delete [] this->vigenereSquare;
-   }
-}
-
 /**
  * Sets the key to use
  * @param key - the key to use
@@ -52,15 +39,12 @@ string Vigenere::encrypt(const string& plaintext)
     for (string::size_type i = 0; this->key.length() < tmp_plaintext.length(); i++)
         this->key += tmp_plaintext[i];
     
-    // Create a Vigenere square
-    this->createVigenereSqure();
-    
     /** Encryption begins **/
     string cipherText;
     
     for (string::size_type i = 0; i < tmp_plaintext.length(); i++) {
         findIntersection(this->key[i], tmp_plaintext[i]);
-        cipherText += this->vigenereSquare[intersection.row][intersection.col];
+        cipherText += this->vigenereSquare(intersection.row, intersection.col);
     }
     
     cout << setw(OUTPUT_WIDTH) << left << "Text:" << tmp_plaintext << endl;
@@ -82,9 +66,6 @@ string Vigenere::decrypt(const string& cipherText)
     string tmp_cipherText = cipherText;
     transform(tmp_cipherText.begin(), tmp_cipherText.end(), tmp_cipherText.begin(), ::toupper);
     
-    // Create a Vignere square
-    this->createVigenereSqure();
-    
     /** Decryption begins **/
     string plaintext;
     
@@ -102,8 +83,8 @@ string Vigenere::decrypt(const string& cipherText)
         for (int col = 0; col < ALPHABETH_COUNT / 2; col++) {
             
             // Look for a letter from left and right side of the column
-            encouterLetterFromLeft  = vigenereSquare[intersection.row][col];
-            encouterLetterFromRight = vigenereSquare[intersection.row][ALPHABETH_COUNT - col - 1];
+            encouterLetterFromLeft  = vigenereSquare(intersection.row, col);
+            encouterLetterFromRight = vigenereSquare(intersection.row, ALPHABETH_COUNT - col - 1);
             
             if (cipherText[i] == encouterLetterFromLeft) {
                 foundAtCol = col;
@@ -117,8 +98,8 @@ string Vigenere::decrypt(const string& cipherText)
         }
 
         // Concat a found plaintext to a key since we are using Vigenere Cipher with autokey
-        this->key += vigenereSquare[0][foundAtCol];
-        plaintext += vigenereSquare[0][foundAtCol];
+        this->key += vigenereSquare(0, foundAtCol);
+        plaintext += vigenereSquare(0, foundAtCol);
     }
     
     cout << setw(OUTPUT_WIDTH) << left << "Ciphertext: " << cipherText << endl;
@@ -130,24 +111,13 @@ string Vigenere::decrypt(const string& cipherText)
 }
 
 /**
- * Create a Vigenere square
- * @param - none
- * @return - none
+ * This holds a Vigenere Square searchable by row and col
+ * @param row - a row of a Vigenere Square, col a column of a Vigenere Square
+ * @return - a char at the intersection of a row and col
  */
-void Vigenere::createVigenereSqure(void)
+char Vigenere::vigenereSquare(const int& row, const int& col)
 {
-    // Allocate 26 rows on vigenereSquare
-    this->vigenereSquare = new char*[ALPHABETH_COUNT];
-    
-    for (int row = 0; row < ALPHABETH_COUNT; row++) {
-        // Allocate 26 cols on each vigenereSquare's row
-        this->vigenereSquare[row] = new char[ALPHABETH_COUNT];
-        
-        for (int col = 0; col < ALPHABETH_COUNT; col++)
-            // Save integer that represents a letter in ASCII to vigenereSquare
-            // Since it's a char type, an integer turns to a correspond ASCII letter
-            this->vigenereSquare[row][col] = UPPER_ALPHA_ASCII_BEGIN + ((col + row) % ALPHABETH_COUNT);
-    }
+    return UPPER_ALPHA_ASCII_BEGIN + ((col + row) % ALPHABETH_COUNT);
 }
 
 /**

@@ -24,9 +24,6 @@ class Vigenere: public CipherInterface
     /** The public members **/
 public:
     
-    /** Destructor **/
-    ~Vigenere();
-    
     /**
      * Sets the key to use
      * @param key - the key to use
@@ -51,7 +48,6 @@ public:
     /* The protected members */
 protected:
     string key;
-    char **vigenereSquare;
     
     /** Variable to hold on col and row of the intersect point on VS**/
     struct Pair {
@@ -60,11 +56,11 @@ protected:
     }intersection;
     
     /**
-     * Create a Vigenere square
-     * @param - none
-     * @return - none
+     * This holds a Vigenere Square searchable by row and col
+     * @param row - a row of a Vigenere Square, col a column of a Vigenere Square
+     * @return - a char at the intersection of a row and col
      */
-    void createVigenereSqure(void);
+    char vigenereSquare(const int& row, const int& col);
     
     /**
      * Look for an intersection of letter and key
