@@ -11,9 +11,8 @@ const int OUTPUT_WIDTH = 15;
  */
 bool Vigenere::setKey(const string& key)
 {
-    for ( string::size_type i = 0; i < key.length(); i++) {
+    for ( string::size_type i = 0; i < key.length(); i++)
         if ( !isalpha(key[i]) ) return false;
-    }
     
     this->key = key;
     
@@ -82,7 +81,7 @@ string Vigenere::decrypt(const string& cipherText)
         // Search for a column contains a plaintext
         for (int col = 0; col < ALPHABETH_COUNT / 2; col++) {
             
-            // Look for a letter from left and right side of the column
+            // Look for a letter from left and right side of a Vigenere Square
             encouterLetterFromLeft  = vigenereSquare(intersection.row, col);
             encouterLetterFromRight = vigenereSquare(intersection.row, ALPHABETH_COUNT - col - 1);
             
@@ -128,9 +127,9 @@ char Vigenere::vigenereSquare(const int& row, const int& col)
  */
 void Vigenere::findIntersection(const char& key, const char& letter)
 {
-    intersection.row = (UPPER_ALPHA_ASCII_BEGIN + key) % 26;
+    intersection.row = (UPPER_ALPHA_ASCII_BEGIN + key) % ALPHABETH_COUNT;
     
     // Skip this when letter was not passed in
     if ( letter != '\0' )
-        intersection.col = (UPPER_ALPHA_ASCII_BEGIN + letter) % 26;
+        intersection.col = (UPPER_ALPHA_ASCII_BEGIN + letter) % ALPHABETH_COUNT;
 }

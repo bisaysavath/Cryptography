@@ -53,7 +53,7 @@ protected:
     struct Pair {
         int row;
         int col;
-    }intersection;
+    } intersection;
     
     /**
      * This holds a Vigenere Square searchable by row and col
