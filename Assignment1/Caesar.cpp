@@ -2,6 +2,8 @@
 
 using namespace std;
 
+const int ALPHABET_COUNT = 26;
+const int LOWER_ALPHA_ASCII_BEGIN = 97;
 
 /**
 * Sets the key to use
@@ -10,15 +12,19 @@ using namespace std;
 */
 bool Caesar::setKey(const string& key)
 {
-	if (!key.empty() && key.find_first_not_of("0123456789") == std::string::npos)
-	{
-		//using stoic function to change string key to int key
-		this->key = stoi(key);
-		return true;
-	}
-	else
-	    return false;
+	
+    //Check if every character in key is a number
+    for (int i = 0; i < key.length(); i ++){
+        
+        if (!isdigit(key[i]))
+            return false;
+            
+    }
 
+    //Using stoic function to change string key to int key
+    this->key = stoi(key);
+    
+    return true;
 }
 
 
@@ -30,22 +36,21 @@ bool Caesar::setKey(const string& key)
 string Caesar::encrypt(const string& plaintext)
 {
 	string cipherText = "";
-
+    
+    
 	for (int i = 0; i < plaintext.length(); i++)
 	{
 	    if (isalpha(plaintext[i]))
 	    {
-			char c;
-	        c = plaintext[i];
+			char c = plaintext[i];
 	        c = tolower(c);
-			//Using ASCII number
-			//a is 97 dec
-	        c = (((c-97)+ key) % 26) + 97;
+            
+            //Shifting c "key" steps to the right
+	        c = (((c - LOWER_ALPHA_ASCII_BEGIN)+ key) % ALPHABET_COUNT) + LOWER_ALPHA_ASCII_BEGIN;
 	        cipherText.push_back(c);
 	    }
 	}
 
-	cout << "Encrypt called" << endl;
 	return cipherText;
 }
 
@@ -58,7 +63,6 @@ string Caesar::decrypt(const string& cipherText)
 {
 	string plainText = "";
 
-
 	for (int i = 0; i < cipherText.length(); i++)
 	{
 	    if (isalpha(cipherText[i]))
@@ -66,14 +70,13 @@ string Caesar::decrypt(const string& cipherText)
 			char c;
 	        c = cipherText[i];
 			c = tolower(c);
-			//Using ASCII number
-			//a is 97 dec
-	        c = ((((c - 97) - key) + 26) % 26) + 97;
+            
+            //Shifting c "key" steps to the left
+	        c = ((((c - LOWER_ALPHA_ASCII_BEGIN) - key) + ALPHABET_COUNT) % ALPHABET_COUNT) + LOWER_ALPHA_ASCII_BEGIN;
 	        plainText.push_back(c);
 	    }
 	}
 
-	cout << "Decrypt called" << endl;
 	return plainText;
 }
 
