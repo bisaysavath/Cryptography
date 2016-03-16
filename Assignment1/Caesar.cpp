@@ -12,13 +12,11 @@ const int LOWER_ALPHA_ASCII_BEGIN = 97;
 */
 bool Caesar::setKey(const string& key)
 {
-	
     //Check if every character in key is a number
     for (int i = 0; i < key.length(); i ++){
         
         if (!isdigit(key[i]))
             return false;
-            
     }
 
     //Using stoic function to change string key to int key
@@ -37,15 +35,14 @@ string Caesar::encrypt(const string& plaintext)
 {
 	string cipherText = "";
     
-    
 	for (int i = 0; i < plaintext.length(); i++)
 	{
 	    if (isalpha(plaintext[i]))
 	    {
-			char c = plaintext[i];
+		char c = plaintext[i];
 	        c = tolower(c);
             
-            //Shifting c "key" steps to the right
+            	//Shifting c "key" steps to the right
 	        c = (((c - LOWER_ALPHA_ASCII_BEGIN)+ key) % ALPHABET_COUNT) + LOWER_ALPHA_ASCII_BEGIN;
 	        cipherText.push_back(c);
 	    }
@@ -67,11 +64,10 @@ string Caesar::decrypt(const string& cipherText)
 	{
 	    if (isalpha(cipherText[i]))
 	    {
-			char c;
-	        c = cipherText[i];
-			c = tolower(c);
+		char c = cipherText[i];
+		c = tolower(c);
             
-            //Shifting c "key" steps to the left
+            	//Shifting c "key" steps to the left
 	        c = ((((c - LOWER_ALPHA_ASCII_BEGIN) - key) + ALPHABET_COUNT) % ALPHABET_COUNT) + LOWER_ALPHA_ASCII_BEGIN;
 	        plainText.push_back(c);
 	    }
