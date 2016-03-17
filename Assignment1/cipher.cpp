@@ -6,6 +6,7 @@
 #include "Vigenere.h"
 #include "RowTransposition.h"
 #include "Caesar.h"
+#include "Hill.h"
 
 using namespace std;
 
@@ -49,7 +50,12 @@ int main(int argc, char** argv)
 	else if (cipherName == "CES")
 	{
 		/*Creating an instance of Caesar cipher */
-	        cipher = new Caesar();
+	    cipher = new Caesar();
+	}
+	else if (cipherName == "HIL")
+	{
+		/*Creating an instance of Caesar cipher */
+	    cipher = new Hill();
 	}
 	else {
 		cout << "Couldn't identify a given cipher" << endl;

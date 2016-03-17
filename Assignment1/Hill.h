@@ -14,11 +14,15 @@ using namespace std;
  * CipherInterface.
 **/
 
-class HillCipher: public CipherInterface
+class Hill: public CipherInterface
 {
 	/** The public members **/
 public:
-	~HillCipher();
+    
+    /** Constructor and destructor **/
+    // Initialize the const MATRIX_WIDTH for Hill
+//    Hill(void);
+//	~Hill();
 	
     /**
      * Sets the key to use
@@ -43,11 +47,12 @@ public:
     
     /* The protected members */
 private:
-	vector<int> keyNum;
 	int row;
 	int col;
-	char ** matrix;
-	int keymatrix[5][5];
+	char **matrix;
+	int **keyMatrix;
+    void createMatrix();
+    int charToNum(const char& letter);
 };
 
 #endif

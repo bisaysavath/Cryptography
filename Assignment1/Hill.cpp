@@ -6,10 +6,14 @@
 
 const int ALPHABETH_COUNT = 26;
 const int LOWER_ALPHA_ASCII_BEGIN = 97;
+const int MATRIX_WIDTH = 5;
 
-const int MATRIX_SIZE = 5;
+//Hill::Hill(void)
+//{
+//
+//}
 
-bool HillCipher::setKey(const string& key)
+bool Hill::setKey(const string& key)
 {
 	vector <int> testKey;
 	stringstream stream(key);
@@ -21,36 +25,49 @@ bool HillCipher::setKey(const string& key)
 			testKey.push_back(Num);
 		}
         
-		if(testKey.size() != pow(MATRIX_SIZE, 2))
+		if(testKey.size() != pow(MATRIX_WIDTH, 2))
 		{
+            cout << "ERROR: Key size must be: " << pow(MATRIX_WIDTH, 2) << endl;
 			return false;
 		}
 	}
     else
     {
+        cout << "ERROR: Numbers only." << endl;
         return false;
     }
     
-    this->keyNum = testKey;
+    keyMatrix = new int*[MATRIX_WIDTH];
+    int k = 0;
+    
+    for(int i = 0; i < MATRIX_WIDTH; i++)
+    {
+        keyMatrix[i] = new int[MATRIX_WIDTH];
+        
+        for(int j = 0; j < MATRIX_WIDTH; j++, k++)
+        {
+            keyMatrix[i][j] = testKey[k];
+        }
+    }
+    
+    for(int i = 0; i < MATRIX_WIDTH; i++)
+    {
+        for(int j = 0; j < MATRIX_WIDTH; j++, k++)
+            cout << keyMatrix[i][j] << " ";
+        
+        cout << endl;
+    }
+    
     return true;
 }
 
-string HillCipher::encrypt(const string& plaintext)
+string Hill::encrypt(const string& plaintext)
 {
 	string ciphertext = "";
-
-	int k = 0;
-	for(int i = 0; i < 5; ++i)
-	{
-		for(int j = 0; j < 5; ++j)
-		{
-			keymatrix[i][j] = this->keyNum[k];
-			++k;
-		}
-	}
-
-	row = 5;
-	testCol = plaintext.length() % row;
+	row = MATRIX_WIDTH;
+    
+	int testCol = plaintext.length() % row;
+    
 	if(testCol != 0)
 	{
 		col = plaintext.length() / row + 1;
@@ -59,6 +76,7 @@ string HillCipher::encrypt(const string& plaintext)
 	{
 		col = plaintext.length() / row;
 	}
+    
 	createMatrix();
 	
 	for(int i = 0; i < plaintext.length(); ++i)
@@ -82,7 +100,7 @@ string HillCipher::encrypt(const string& plaintext)
 		{
 			for(int k = 0; k < 5; ++k)
 			{
-				this->matrix[i][j] += keymatrix[i][k] * matrix[k][j];
+				this->matrix[i][j] += keyMatrix[i][k] * matrix[k][j];
 			}
 		}
 	}
@@ -91,11 +109,13 @@ string HillCipher::encrypt(const string& plaintext)
 		for(int j = 0; j < 5; ++j)
 		{
 			int tempNum = this->matrix[i][j];
+            
 			while(tempNum < 0)
 			{
 				tempNum += 27;
 			}
-			char returnLetter = static_cast<char>('a' + temNum);
+            
+			char returnLetter = static_cast<char>('a' + tempNum);
 			stringstream ss;
 			string tempEl;
 			ss << returnLetter;
@@ -103,28 +123,30 @@ string HillCipher::encrypt(const string& plaintext)
 			ciphertext.push_back(tempEl);
 		}
 	}
-	return ciphertext; 
+    
+	return ciphertext;
 }
 
-string HillCipher::decrypt(const string& ciphertext)
+string Hill::decrypt(const string& ciphertext)
 {
-	vector <int> enterKey;
-	string ciphertext = "";
-	stringstream stream(key);
-	int Num;
-	while(stream >> Num)
-	{
-		enterKey.push_back(Num);
-	}
-	
+//	vector <int> enterKey;
+//	string ciphertext = "";
+//	stringstream stream(key);
+//	int Num;
+//	while(stream >> Num)
+//	{
+//		enterKey.push_back(Num);
+//	}
+    return "";
 }
+
 //create the matrix when we know the row and the column
-void HillCipher::createMatrix()
+void Hill::createMatrix()
 {
-	this->matrix = new int[row];
+	matrix = new char*[row];
 	for(int i = 0; i < row; ++i)
 	{
-		this->matrix[i] = new int[col];
+		matrix[i] = new char[col];
 	}
 	
 	for(int i = 0; i < row; ++i)
@@ -137,7 +159,7 @@ void HillCipher::createMatrix()
 }
 
 
-int HillCipher::charToNum(const char& letter)
+int Hill::charToNum(const char& letter)
 {
     return (LOWER_ALPHA_ASCII_BEGIN + letter) % ALPHABETH_COUNT;
 }
