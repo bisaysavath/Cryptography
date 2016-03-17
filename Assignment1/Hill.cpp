@@ -1,47 +1,50 @@
-#include "HillCipher.h"
+#include "Hill.h"
+
 #include <string>
 #include <sstream>
+#include <math.h>
+
+const int ALPHABETH_COUNT = 26;
+const int LOWER_ALPHA_ASCII_BEGIN = 97;
+
+const int MATRIX_SIZE = 5;
 
 bool HillCipher::setKey(const string& key)
 {
 	vector <int> testKey;
 	stringstream stream(key);
 	int Num;
-	if(key.find_first_not_of(" -0123456789") == string::npos)
+	if(key.find_first_not_of(" 0123456789") == string::npos)
 	{
 		while(stream >> Num)
 		{
-			if(Num == "-")
-			{
-				return false;
-			}
 			testKey.push_back(Num);
 		}
-		if(testKey.size() != 25)
+        
+		if(testKey.size() != pow(MATRIX_SIZE, 2))
 		{
 			return false;
 		}
 	}
-this->keyNum = key;
-return true;
+    else
+    {
+        return false;
+    }
+    
+    this->keyNum = testKey;
+    return true;
 }
 
 string HillCipher::encrypt(const string& plaintext)
 {
-	vector <int> enterKey;
 	string ciphertext = "";
-	stringstream stream(key);
-	int Num;
-	while(stream >> Num)
-	{
-		enterKey.push_back(Num);
-	}
+
 	int k = 0;
 	for(int i = 0; i < 5; ++i)
 	{
 		for(int j = 0; j < 5; ++j)
 		{
-			keymatrix[i][j] = enterKey[k];
+			keymatrix[i][j] = this->keyNum[k];
 			++k;
 		}
 	}
@@ -134,64 +137,9 @@ void HillCipher::createMatrix()
 }
 
 
-int HillCipher::chartoNum(char chartoNumber)
+int HillCipher::charToNum(const char& letter)
 {
-	switch(chartoNumber)
-	{
-		case 'a':
-			return 0;
-		case 'b':
-			return 1;
-		case 'c':
-			return 2;
-		case 'd':
-			return 3;
-		case 'e':
-			return 4;
-		case 'f':
-			return 5;
-		case 'g':		
-			return 6;
-		case 'h':
-			return 7;
-		case 'i':
-			return 8;
-		case 'j':
-			return 9;
-		case 'k':
-			return 10;
-		case 'l':
-			return 11;
-		case 'm':		
-			return 12;
-		case 'n':		
-			return 13;
-		case 'o':
-			return 14;
-		case 'p':
-			return 15;
-		case 'q':
-			return 16;
-		case 'r':
-			return 17;
-		case 's':
-			return 18;
-		case 't':
-			return 19;
-		case 'u':
-			return 20;
-		case 'v':
-			return 21;
-		case 'w':		
-			return 22;
-		case 'x':
-			return 23;
-		case 'y':
-			return 24;
-		case 'z':
-			return 25;
-	}
-	return -1;
+    return (LOWER_ALPHA_ASCII_BEGIN + letter) % ALPHABETH_COUNT;
 }
 
 
