@@ -81,7 +81,7 @@ string Hill::encrypt(const string& plaintext)
     int plaintextRow = MATRIX_WIDTH;
     int plaintextCol = temp_plaintext.length() / plaintextRow;
     
-    // Do all the letters in a plaintext fit in all rows?
+    // Do all the letters in a plaintext fit in all columns with a given row size?
     if (temp_plaintext.length() % plaintextRow != 0) {
         // If not, plaintextCol gets one more column
         plaintextCol += 1;
