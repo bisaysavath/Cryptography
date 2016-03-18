@@ -50,7 +50,10 @@ bool Hill::setKey(const string& key)
     
     if (getMatrixDeterminant() % ALPHABETH_COUNT == 0) {
         cout << "WARNING: This key matrix is not invertible. Thus, decryption is not possible." << endl;
-        return false;
+        cout << "Would you like to continue? (Y/N): " << endl;
+        char ans;
+        cin >> ans;
+        return (ans == 'Y') ? true : false;
     }
     
 //    for(int i = 0; i < MATRIX_WIDTH; i++)
