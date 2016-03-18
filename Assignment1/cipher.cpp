@@ -6,6 +6,7 @@
 #include "Vigenere.h"
 #include "RowTransposition.h"
 #include "Caesar.h"
+#include "Hill.h"
 
 using namespace std;
 
@@ -49,7 +50,12 @@ int main(int argc, char** argv)
 	else if (cipherName == "CES")
 	{
 		/*Creating an instance of Caesar cipher */
-	        cipher = new Caesar();
+	    cipher = new Caesar();
+	}
+	else if (cipherName == "HIL")
+	{
+		/*Creating an instance of Caesar cipher */
+	    cipher = new Hill();
 	}
 	else {
 		cout << "Couldn't identify a given cipher" << endl;
@@ -58,11 +64,11 @@ int main(int argc, char** argv)
   
 	/* Error checks */
 	if(!cipher)
-		{
-			fprintf(stderr, "ERROR [%s %s %d]: could not allocate memory\n",	
-				__FILE__, __FUNCTION__, __LINE__);
-			exit(-3);
-		}
+	{
+		fprintf(stderr, "ERROR [%s %s %d]: could not allocate memory\n",	
+			__FILE__, __FUNCTION__, __LINE__);
+		exit(-3);
+	}
 	
 	/* Set the encryption key */
 	if(!cipher->setKey(key)){
