@@ -48,22 +48,6 @@ bool Hill::setKey(const string& key)
         }
     }
     
-    if (getMatrixDeterminant() % ALPHABETH_COUNT == 0) {
-        cout << "WARNING: This key matrix is not invertible. Thus, decryption is not possible." << endl;
-        cout << "Would you like to continue? (Y/N): " << endl;
-        char ans;
-        cin >> ans;
-        return (ans == 'Y') ? true : false;
-    }
-    
-//    for(int i = 0; i < MATRIX_WIDTH; i++)
-//    {
-//        for(int j = 0; j < MATRIX_WIDTH; j++)
-//            cout << keyMatrix[i][j] << " ";
-//        
-//        cout << endl;
-//    }
-    
     return true;
 }
 
@@ -78,17 +62,17 @@ string Hill::encrypt(const string& plaintext)
     string temp_plaintext = plaintext;
     transform(temp_plaintext.begin(), temp_plaintext.end(), temp_plaintext.begin(), ::toupper);
     
-    int plaintextRow = MATRIX_WIDTH;
-    int plaintextCol = temp_plaintext.length() / plaintextRow;
+    textRow = MATRIX_WIDTH;
+    textCol = temp_plaintext.length() / textRow;
     
     // Do all the letters in a plaintext fit in all columns with a given row size?
-    if (temp_plaintext.length() % plaintextRow != 0) {
+    if (temp_plaintext.length() % textRow != 0) {
         // If not, plaintextCol gets one more column
-        plaintextCol += 1;
+        textCol += 1;
     }
     
     // Create a matrix to hold plaintext
-    createCharMatrix(plaintextRow, plaintextCol, temp_plaintext);
+    createCharMatrix(textRow, textCol, temp_plaintext);
     
     // Encrypt using Matrix multiplication
     string ciphertext = "";
@@ -105,7 +89,7 @@ string Hill::encrypt(const string& plaintext)
      this makes it easier to do a matrix maltiplication
      **/
     
-    for (int charMatrixCol = 0; charMatrixCol < plaintextCol; charMatrixCol++)
+    for (int charMatrixCol = 0; charMatrixCol < textCol; charMatrixCol++)
     {
         int matrixOutput[MATRIX_WIDTH] = {};
         
@@ -135,12 +119,67 @@ string Hill::encrypt(const string& plaintext)
  */
 string Hill::decrypt(const string& ciphertext)
 {
+    // Get the inverse matrix key
+    if ( !createInveseMatrix() )
+    {
+        return "";
+    }
     
-    return "";
+    // Convert ciphertext to uppercase
+    string temp_ciphertext = ciphertext;
+    transform(temp_ciphertext.begin(), temp_ciphertext.end(), temp_ciphertext.begin(), ::toupper);
+    
+    textRow = MATRIX_WIDTH;
+    textCol = temp_ciphertext.length() / textRow;
+
+    // Create a matrix to hold plaintext
+    createCharMatrix(textRow, textCol, temp_ciphertext);
+    
+    // Decrypt using Matrix multiplication
+    string plaintext = "";
+    
+    /**
+     charMatrix will be setup by,
+     say 3 cols by 5 rows, we'd have
+     
+     0 1 2 3 4
+     0 [ | | | | ]
+     1 [ | | | | ]
+     2 [ | | | | ]
+     
+     this makes it easier to do a matrix maltiplication
+     **/
+    
+    for (int charMatrixCol = 0; charMatrixCol < textCol; charMatrixCol++)
+    {
+        int matrixOutput[MATRIX_WIDTH] = {};
+        
+        for (int keyMatrixRow = 0; keyMatrixRow < MATRIX_WIDTH; keyMatrixRow++)
+        {
+            for (int index = 0; index < MATRIX_WIDTH; index++)
+            {
+                matrixOutput[keyMatrixRow] += keyMatrix[keyMatrixRow][index] * charMatrix[charMatrixCol][index];
+            }
+        }
+        
+        for (int index = 0; index < MATRIX_WIDTH; index++) {
+            plaintext += numToChar(matrixOutput[index]);
+        }
+    }
+    
+    cout << setw(OUTPUT_WIDTH) << left << "Ciphertext: " << temp_ciphertext << endl;
+    cout << setw(OUTPUT_WIDTH) << left << "Plaintext: " << plaintext << endl;
+    
+    return plaintext;
 }
 
-//create the matrix when we know the row and the column
-void Hill::createCharMatrix(const int& row, const int& col, const string& plaintext)
+/**
+ * Creates a char matrix with a given row, col and text
+ * Pad the column with 'X' if the column is not filled up
+ * @param row - row needed, col - column needed, text - text to be input
+ * @return - none
+ */
+void Hill::createCharMatrix(const int& row, const int& col, const string& text)
 {
     /**
      charMatrix will be setup by,
@@ -156,7 +195,7 @@ void Hill::createCharMatrix(const int& row, const int& col, const string& plaint
 	charMatrix = new int*[col];
     
     int k = 0;
-    int textLength = plaintext.length();
+    int textLength = text.length();
 
     for(int i = 0; i < col; i++)
     {
@@ -164,7 +203,7 @@ void Hill::createCharMatrix(const int& row, const int& col, const string& plaint
         
         for (int j = 0; j < row; j++, k++) {
             if (textLength > k) {
-                charMatrix[i][j] = charToNum(plaintext[k]);
+                charMatrix[i][j] = charToNum(text[k]);
             }
             else {
                 // Padding the extra column
@@ -172,25 +211,24 @@ void Hill::createCharMatrix(const int& row, const int& col, const string& plaint
             }
         }
     }
-    
-//    for(int i = 0; i < col; i++)
-//    {
-//        for(int j = 0; j < row; j++)
-//            cout << charMatrix[i][j] << " ";
-//        
-//        cout << endl;
-//    }
 }
 
-int Hill::getMatrixDeterminant(void)
+/**
+ * Creates an inverse matrix for a key during a decryption process
+ * @param none
+ * @return - boolean value whether a process is sussessful or not
+ */
+bool Hill::createInveseMatrix(void)
 {
     /**
-         [a|b|c]
-     A = [d|e|f]
-         [g|h|i]
+                   [e|f] [d|f] [d|e]
+                  +[h|i]-[g|i]+[g|h]
+         [a|b|c]   [b|c] [a|c] [a|b]
+     A = [d|e|f] =-[h|i]+[g|i]-[g|h] mod 26
+         [g|h|i]   [b|c] [a|c] [a|b]
+                  +[e|f]-[d|f]+[d|e]
      
-     |A| = a (ei -fh) - b(di - fg) + c(dh -eg)
-     **/
+    **/
     
     int a = keyMatrix[0][0];
     int b = keyMatrix[0][1];
@@ -202,14 +240,94 @@ int Hill::getMatrixDeterminant(void)
     int h = keyMatrix[2][1];
     int i = keyMatrix[2][2];
     
-    return ((a * (e * i - f * h)) - (b * (d * i - f * g)) + (c * (d * h - e * g)));
+    int determinant = ((a * (e * i - f * h)) - (b * (d * i - f * g)) + (c * (d * h - e * g))) % ALPHABETH_COUNT;
+    int inverseOfDeterminant = -1;
+    
+    for (int count = 0; count < ALPHABETH_COUNT; count++) {
+        if ((determinant * count) % ALPHABETH_COUNT == 1) {
+            inverseOfDeterminant = count;
+            break;
+        }
+    }
+    
+    if (inverseOfDeterminant == -1) {
+        cout << "Error: the key matrix is invertible. Program is terminating." << endl;
+        return false;
+    }
+    
+    keyMatrix[0][0] = (e * i - f * h);      // a
+    keyMatrix[0][1] = (d * i - f * g) * -1; // b
+    keyMatrix[0][2] = (d * h - e * g);      // c
+    keyMatrix[1][0] = (b * i - c * h) * -1; // d
+    keyMatrix[1][1] = (a * i - c * g);      // e
+    keyMatrix[1][2] = (a * h - b * g) * -1; // f
+    keyMatrix[2][0] = (b * f - c * e);      // g
+    keyMatrix[2][1] = (a * f - c * d) * -1; // h
+    keyMatrix[2][2] = (a * e - b * d);      // i
+    
+    /**
+     doing a transpose
+         [a|d|g]
+     A = [b|e|h]
+         [c|f|i]
+     **/
+    
+    a = keyMatrix[0][0];
+    b = keyMatrix[0][1];
+    c = keyMatrix[0][2];
+    d = keyMatrix[1][0];
+    e = keyMatrix[1][1];
+    f = keyMatrix[1][2];
+    g = keyMatrix[2][0];
+    h = keyMatrix[2][1];
+    i = keyMatrix[2][2];
+    
+    keyMatrix[0][1] = d; // b becomes d
+    keyMatrix[0][2] = g; // c becomes g
+    keyMatrix[1][0] = b; // d becomes b
+    keyMatrix[1][2] = h; // f becomes h
+    keyMatrix[2][0] = c; // g becomes c
+    keyMatrix[2][1] = f; // h becomes f
+    
+    // keyMatrix % 26, keyMatrix multiplies the inverseOfDeterminant and mod to 26 again
+    for(int i = 0; i < MATRIX_WIDTH; i++)
+    {
+        for(int j = 0; j < MATRIX_WIDTH; j++)
+        {
+            int mod = keyMatrix[i][j] % ALPHABETH_COUNT;
+            // When modula returns nagative output
+            if (mod < 0) {
+                keyMatrix[i][j] = mod + ALPHABETH_COUNT;
+            }
+            else
+            {
+                keyMatrix[i][j] = mod;
+            }
+            
+            keyMatrix[i][j] *= inverseOfDeterminant;
+            keyMatrix[i][j] %= ALPHABETH_COUNT;
+        }
+    }
+    
+    return true;
 }
+
+/**
+ * Takes a character type and return the position of it in the alphabeth
+ * @param letter - a char type letter
+ * @return - position of it in the alphabeth
+ */
 
 int Hill::charToNum(const char& letter)
 {
     return (UPPER_ALPHA_ASCII_BEGIN + letter) % ALPHABETH_COUNT;
 }
 
+/**
+ * Takes a position of it in the alphabeth and return a character
+ * @param num - position in the alphabeth
+ * @return - a char type letter
+ */
 char Hill::numToChar(const int& num)
 {
     return UPPER_ALPHA_ASCII_BEGIN + (num % ALPHABETH_COUNT);

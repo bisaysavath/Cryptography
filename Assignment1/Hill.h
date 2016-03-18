@@ -9,6 +9,7 @@
 #include <math.h>
 #include <algorithm>
 #include <iomanip>
+//#include <stdlib.h>
 
 #include "CipherInterface.h"
 
@@ -51,9 +52,36 @@ private:
 	int **charMatrix;
 	int **keyMatrix;
     
-    void createCharMatrix(const int& row, const int& col, const string& plaintext);
-    int getMatrixDeterminant(void);
+    int textRow;
+    int textCol;
+    
+    /**
+     * Creates a char matrix with a given row, col and text
+     * Pad the column with 'X' if the column is not filled up
+     * @param row - row needed, col - column needed, text - text to be input
+     * @return - none
+     */
+    void createCharMatrix(const int& row, const int& col, const string& text);
+    
+    /**
+     * Creates an inverse matrix for a key during a decryption process
+     * @param none
+     * @return - boolean value whether a process is sussessful or not
+     */
+    bool createInveseMatrix(void);
+    
+    /**
+     * Takes a character type and return the position of it in the alphabeth
+     * @param letter - a char type letter
+     * @return - position of it in the alphabeth
+     */
     int charToNum(const char& letter);
+    
+    /**
+     * Takes a position of it in the alphabeth and return a character
+     * @param num - position in the alphabeth
+     * @return - a char type letter
+     */
     char numToChar(const int& num);
 };
 
