@@ -4,6 +4,11 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <string>
+#include <sstream>
+#include <math.h>
+#include <algorithm>
+
 #include "CipherInterface.h"
 
 using namespace std;
@@ -19,12 +24,7 @@ class Hill: public CipherInterface
 	/** The public members **/
 public:
     
-    /** Constructor and destructor **/
-    // Initialize the const MATRIX_WIDTH for Hill
-//    Hill(void);
-//	~Hill();
-	
-    /**
+    /**m
      * Sets the key to use
      * @param key - the key to use
      * @return - True if the key is valid and False otherwise
@@ -47,12 +47,12 @@ public:
     
     /* The protected members */
 private:
-	int row;
-	int col;
-	char **matrix;
+	int **charMatrix;
 	int **keyMatrix;
-    void createMatrix();
+    
+    void createCharMatrix(const int& row, const int& col, const string& plaintext);
     int charToNum(const char& letter);
+    char numToChar(const int& num);
 };
 
 #endif

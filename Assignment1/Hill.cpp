@@ -1,17 +1,10 @@
 #include "Hill.h"
 
-#include <string>
-#include <sstream>
-#include <math.h>
-
 const int ALPHABETH_COUNT = 26;
-const int LOWER_ALPHA_ASCII_BEGIN = 97;
-const int MATRIX_WIDTH = 5;
-
-//Hill::Hill(void)
-//{
-//
-//}
+const int UPPER_ALPHA_ASCII_BEGIN = 65;
+const int MATRIX_WIDTH = 2;
+const string UPPER_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+//const string UPPER_ALPHA_DESC = "ZYXWVUTSRQPONMLKJIHGFEDCBA";
 
 bool Hill::setKey(const string& key)
 {
@@ -50,79 +43,69 @@ bool Hill::setKey(const string& key)
         }
     }
     
-    for(int i = 0; i < MATRIX_WIDTH; i++)
-    {
-        for(int j = 0; j < MATRIX_WIDTH; j++, k++)
-            cout << keyMatrix[i][j] << " ";
-        
-        cout << endl;
-    }
+//    for(int i = 0; i < MATRIX_WIDTH; i++)
+//    {
+//        for(int j = 0; j < MATRIX_WIDTH; j++)
+//            cout << keyMatrix[i][j] << " ";
+//        
+//        cout << endl;
+//    }
     
     return true;
 }
 
 string Hill::encrypt(const string& plaintext)
 {
-	string ciphertext = "";
-	row = MATRIX_WIDTH;
+    // Convert plaintext to uppercase
+    string temp_plaintext = plaintext;
+    transform(temp_plaintext.begin(), temp_plaintext.end(), temp_plaintext.begin(), ::toupper);
+    cout << temp_plaintext << endl;
     
-	int testCol = plaintext.length() % row;
+    int plaintextRow = MATRIX_WIDTH;
+    int plaintextCol = temp_plaintext.length() / plaintextRow;
     
-	if(testCol != 0)
-	{
-		col = plaintext.length() / row + 1;
-	}
-	else
-	{
-		col = plaintext.length() / row;
-	}
+    // Do all the letters in a plaintext fit in all rows?
+    if (temp_plaintext.length() % plaintextRow != 0) {
+        // If not, plaintextCol gets one more column
+        plaintextCol += 1;
+    }
     
-	createMatrix();
-	
-	for(int i = 0; i < plaintext.length(); ++i)
-	{
-		char convert;
-		convert = plaintext.at(i);
-		int result = convert - 'a';
-		this->matrix[i%row][i/row] = result;
-	}
-	
-	if(testCol != 0)
-	{
-		for(int j = testCol; j < row; ++j)
-		{
-			this->matrix[j][col-1] = 23;
-		}
-	}
-	for(int i = 0; i < 5; ++i)
-	{
-		for(int j = 0; j < col; ++j)
-		{
-			for(int k = 0; k < 5; ++k)
-			{
-				this->matrix[i][j] += keyMatrix[i][k] * matrix[k][j];
-			}
-		}
-	}
-	for(int i = 0; i < col; ++i)	
- 	{
-		for(int j = 0; j < 5; ++j)
-		{
-			int tempNum = this->matrix[i][j];
-            
-			while(tempNum < 0)
-			{
-				tempNum += 27;
-			}
-            
-			char returnLetter = static_cast<char>('a' + tempNum);
-			stringstream ss;
-			string tempEl;
-			ss << returnLetter;
-			ss >> tempEl;
-			ciphertext.push_back(tempEl);
-		}
-	}
+    // Create a matrix to hold plaintext
+    createCharMatrix(plaintextRow, plaintextCol, temp_plaintext);
+    
+    // Encrypt using Matrix multiplication
+    string ciphertext = "";
+    
+    /**
+     charMatrix will be setup by,
+     say 3 cols by 5 rows, we'd have
+     
+        0 1 2 3 4
+     0 [ | | | | ]
+     1 [ | | | | ]
+     2 [ | | | | ]
+     
+     this makes it easier to do a matrix maltiplication
+     **/
+    
+    for (int charMatrixCol = 0; charMatrixCol < plaintextCol; charMatrixCol++)
+    {
+        int matrixOutput[MATRIX_WIDTH] = {};
+        
+        for (int keyMatrixRow = 0; keyMatrixRow < MATRIX_WIDTH; keyMatrixRow++)
+        {
+            for (int index = 0; index < MATRIX_WIDTH; index++)
+            {
+                matrixOutput[keyMatrixRow] += keyMatrix[keyMatrixRow][index] * charMatrix[charMatrixCol][index];
+            }
+        }
+        
+        for (int index = 0; index < MATRIX_WIDTH; index++) {
+            ciphertext += numToChar(matrixOutput[index]);
+        }
+    }
+    
+    cout << ciphertext << endl;
     
 	return ciphertext;
 }
@@ -141,27 +124,57 @@ string Hill::decrypt(const string& ciphertext)
 }
 
 //create the matrix when we know the row and the column
-void Hill::createMatrix()
+void Hill::createCharMatrix(const int& row, const int& col, const string& plaintext)
 {
-	matrix = new char*[row];
-	for(int i = 0; i < row; ++i)
-	{
-		matrix[i] = new char[col];
-	}
-	
-	for(int i = 0; i < row; ++i)
-	{
-		for(int j = 0; j < col; ++j)
-		{
-			matrix[i][j] = -1;
-		}
-	}
+    /**
+     charMatrix will be setup by,
+     say 3 cols by 5 rows, we'd have
+     
+        0 1 2 3 4
+     0 [ | | | | ]
+     1 [ | | | | ]
+     2 [ | | | | ]
+     **/
+    
+	charMatrix = new int*[col];
+    
+    int k = 0, l = 0;
+    int textLength = plaintext.length();
+
+    for(int i = 0; i < col; i++)
+    {
+        charMatrix[i] = new int[row];
+        
+        for (int j = 0; j < row; j++, k++) {
+            if (textLength > k) {
+                charMatrix[i][j] = charToNum(plaintext[k]);
+            }
+            else {
+                // Padding the extra column
+                charMatrix[i][j] = charToNum(UPPER_ALPHA[l]);
+                l++;
+            }
+        }
+    }
+    
+//    for(int i = 0; i < col; i++)
+//    {
+//        for(int j = 0; j < row; j++)
+//            cout << charMatrix[i][j] << " ";
+//        
+//        cout << endl;
+//    }
 }
 
 
 int Hill::charToNum(const char& letter)
 {
-    return (LOWER_ALPHA_ASCII_BEGIN + letter) % ALPHABETH_COUNT;
+    return (UPPER_ALPHA_ASCII_BEGIN + letter) % ALPHABETH_COUNT;
+}
+
+char Hill::numToChar(const int& num)
+{
+    return UPPER_ALPHA_ASCII_BEGIN + (num % ALPHABETH_COUNT);
 }
 
 
