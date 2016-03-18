@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 	}
 	else if (cipherName == "HIL")
 	{
-		/*Creating an instance of Caesar cipher */
+		/*Creating an instance of Hill cipher */
 	    cipher = new Hill();
 	}
 	else {

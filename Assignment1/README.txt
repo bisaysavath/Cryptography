@@ -3,6 +3,7 @@
 	Duy Do 			ddo@csu.fullerton.edu
 	Billy Saysavath		bisaysavath@csu.fullerton.edu
 	Tevin Vu		tuanvu01@csu.fullerton.edu
+	Holly Ho		hollyh@csu.fullerton.edu
 – The programming language we use
 	C++
 – How to complile and execute the program.
