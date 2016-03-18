@@ -1,6 +1,7 @@
 
 – Names and email addresses of all partners.
-	Duy Do 	ddo@csu.fullerton.edu
+	Duy Do 			ddo@csu.fullerton.edu
+	Billy Saysavath		bisaysavath@csu.fullerton.edu
 
 – The programming language we use
 	C++
