@@ -64,11 +64,11 @@ int main(int argc, char** argv)
   
 	/* Error checks */
 	if(!cipher)
-		{
-			fprintf(stderr, "ERROR [%s %s %d]: could not allocate memory\n",	
-				__FILE__, __FUNCTION__, __LINE__);
-			exit(-3);
-		}
+	{
+		fprintf(stderr, "ERROR [%s %s %d]: could not allocate memory\n",	
+			__FILE__, __FUNCTION__, __LINE__);
+		exit(-3);
+	}
 	
 	/* Set the encryption key */
 	if(!cipher->setKey(key)){

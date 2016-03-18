@@ -8,6 +8,7 @@
 #include <sstream>
 #include <math.h>
 #include <algorithm>
+#include <iomanip>
 
 #include "CipherInterface.h"
 
@@ -24,7 +25,7 @@ class Hill: public CipherInterface
 	/** The public members **/
 public:
     
-    /**m
+    /**
      * Sets the key to use
      * @param key - the key to use
      * @return - True if the key is valid and False otherwise
@@ -51,6 +52,7 @@ private:
 	int **keyMatrix;
     
     void createCharMatrix(const int& row, const int& col, const string& plaintext);
+    int getMatrixDeterminant(void);
     int charToNum(const char& letter);
     char numToChar(const int& num);
 };

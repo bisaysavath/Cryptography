@@ -1,11 +1,16 @@
 #include "Hill.h"
 
+const int OUTPUT_WIDTH = 15;
+
 const int ALPHABETH_COUNT = 26;
 const int UPPER_ALPHA_ASCII_BEGIN = 65;
-const int MATRIX_WIDTH = 2;
-const string UPPER_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-//const string UPPER_ALPHA_DESC = "ZYXWVUTSRQPONMLKJIHGFEDCBA";
+const int MATRIX_WIDTH = 3; // 3 is a good size
 
+/**
+ * Sets the key to use
+ * @param key - the key to use
+ * @return - True if the key is valid and False otherwise
+ */
 bool Hill::setKey(const string& key)
 {
 	vector <int> testKey;
@@ -43,6 +48,11 @@ bool Hill::setKey(const string& key)
         }
     }
     
+    if (getMatrixDeterminant() % ALPHABETH_COUNT == 0) {
+        cout << "WARNING: This key matrix is not invertible. Thus, decryption is not possible." << endl;
+        return false;
+    }
+    
 //    for(int i = 0; i < MATRIX_WIDTH; i++)
 //    {
 //        for(int j = 0; j < MATRIX_WIDTH; j++)
@@ -54,12 +64,16 @@ bool Hill::setKey(const string& key)
     return true;
 }
 
+/**
+ * Encrypts a plaintext string
+ * @param plaintext - the plaintext string
+ * @return - the encrypted ciphertext string
+ */
 string Hill::encrypt(const string& plaintext)
 {
     // Convert plaintext to uppercase
     string temp_plaintext = plaintext;
     transform(temp_plaintext.begin(), temp_plaintext.end(), temp_plaintext.begin(), ::toupper);
-    cout << temp_plaintext << endl;
     
     int plaintextRow = MATRIX_WIDTH;
     int plaintextCol = temp_plaintext.length() / plaintextRow;
@@ -105,21 +119,20 @@ string Hill::encrypt(const string& plaintext)
         }
     }
     
-    cout << ciphertext << endl;
+    cout << setw(OUTPUT_WIDTH) << left << "Plaintext: " << temp_plaintext << endl;
+    cout << setw(OUTPUT_WIDTH) << left << "Ciphertext: " << ciphertext << endl;
     
 	return ciphertext;
 }
 
+/**
+ * Decrypts a string of ciphertext
+ * @param ciphertext - the ciphertext
+ * @return - the plaintext
+ */
 string Hill::decrypt(const string& ciphertext)
 {
-//	vector <int> enterKey;
-//	string ciphertext = "";
-//	stringstream stream(key);
-//	int Num;
-//	while(stream >> Num)
-//	{
-//		enterKey.push_back(Num);
-//	}
+    
     return "";
 }
 
@@ -134,11 +147,12 @@ void Hill::createCharMatrix(const int& row, const int& col, const string& plaint
      0 [ | | | | ]
      1 [ | | | | ]
      2 [ | | | | ]
+     this makes it easier to do a matrix maltiplication
      **/
     
 	charMatrix = new int*[col];
     
-    int k = 0, l = 0;
+    int k = 0;
     int textLength = plaintext.length();
 
     for(int i = 0; i < col; i++)
@@ -151,8 +165,7 @@ void Hill::createCharMatrix(const int& row, const int& col, const string& plaint
             }
             else {
                 // Padding the extra column
-                charMatrix[i][j] = charToNum(UPPER_ALPHA[l]);
-                l++;
+                charMatrix[i][j] = 23; // Padding the column with a character 23 = 'X'
             }
         }
     }
@@ -166,6 +179,28 @@ void Hill::createCharMatrix(const int& row, const int& col, const string& plaint
 //    }
 }
 
+int Hill::getMatrixDeterminant(void)
+{
+    /**
+         [a|b|c]
+     A = [d|e|f]
+         [g|h|i]
+     
+     |A| = a (ei -fh) - b(di - fg) + c(dh -eg)
+     **/
+    
+    int a = keyMatrix[0][0];
+    int b = keyMatrix[0][1];
+    int c = keyMatrix[0][2];
+    int d = keyMatrix[1][0];
+    int e = keyMatrix[1][1];
+    int f = keyMatrix[1][2];
+    int g = keyMatrix[2][0];
+    int h = keyMatrix[2][1];
+    int i = keyMatrix[2][2];
+    
+    return ((a * (e * i - f * h)) - (b * (d * i - f * g)) + (c * (d * h - e * g)));
+}
 
 int Hill::charToNum(const char& letter)
 {
