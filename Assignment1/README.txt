@@ -27,5 +27,5 @@
 
 – We implemented the extra credit
 – Anything special about your submission that we should take note of.
-With the RTS: they key should enter as "key" with space between the number.
+With the RTS: the key should enter as "key" with space between the numbers.
 		Example: "4 3 2 1 5 6 7"
