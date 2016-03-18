@@ -6,6 +6,7 @@
 	Holly Ho		hollyh@csu.fullerton.edu
 – The programming language we use
 	C++
+	
 – How to complile and execute the program.
 	To compile, simply, type ''make'' at the terminal (without the quotes).
 	Command to execute the program: ./cipher <CIPHER NAME> <KEY> <ENC/DEC> <INPUT FILE> <OUTPUT FILE>
@@ -26,6 +27,7 @@
 
 
 – We implemented the extra credit
+
 – Anything special about your submission that we should take note of.
-With the RTS: the key should enter as "key" with space between the numbers.
+With the RTS and HIL: the key should enter as "key" with space between the numbers.
 		Example: "4 3 2 1 5 6 7"
