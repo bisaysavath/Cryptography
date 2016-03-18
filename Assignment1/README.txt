@@ -32,6 +32,6 @@
 With the RTS: the key should enter as "key" with space between the numbers.
 		Example: "4 3 2 1 5 6 7"
 		
-With the RTS: the key should enter as "key" with space between the numbers.
+With the HIL: the key should enter as "key" with space between the numbers.
 	The matrix size is 3x3, so there should be 9 keys given.
 	Ex: "5 3 2 4 7 4 9 2 8"
