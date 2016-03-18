@@ -1,12 +1,25 @@
-To compile, simply, type ''make'' at the terminal (without the quotes).
-
-Please do not forget to include a README file in your submission.
-It's worth 5 points.
-
-Your README file should include:
 
 – Names and email addresses of all partners.
-– The programming language you use (e.g. C++, Java, Python)
-– How to execute your program.
-– Whether you implemented the extra credit.
+	Duy Do 	ddo@csu.fullerton.edu
+
+– The programming language we use
+	C++
+– How to complile and execute the program.
+	To compile, simply, type ''make'' at the terminal (without the quotes).
+	Command to execute the program: ./cipher <CIPHER NAME> <KEY> <ENC/DEC> <INPUT FILE> <OUTPUT FILE>
+	where
+	CIPHER NAME: is the name of the cipher.  Valid names are:
+		PLF: Playfair
+	  	RTS: Row Transposition
+	 	RFC: Railfence
+		VIG: Vigenre
+		CES: Caesar
+		HIL: Hill
+
+	KEY: the encryption key to use
+	ENC/DEC: whether to encrypt or decrypt, respectively.
+	INPUT FILE: the file from which to read the input.
+	OUTPUT FILE: the file to which the output shall be written
+
+– We implemented the extra credit
 – Anything special about your submission that we should take note of.
