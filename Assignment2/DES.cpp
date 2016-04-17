@@ -1,4 +1,7 @@
+#include <iostream>
 #include "DES.h"
+
+using namespace std;
 
 /**
  * Sets the key to use
@@ -67,6 +70,7 @@ bool DES::setKey(const unsigned char* keyArray)
  */
 unsigned char* DES::encrypt(const unsigned char* plaintext)
 {
+    cout << plaintext << endl;
 	//LOGIC:
 	//1. Check to make sure that the block is exactly 8 characters (i.e. 64 bits)
 	//2. Declate an array DES_LONG block[2];
@@ -79,7 +83,7 @@ unsigned char* DES::encrypt(const unsigned char* plaintext)
 	// (e.g. unsigned char* bytes = nerw unsigned char[8]).
 	//9. Return the pointer to the dynamically allocated array.
 	
-	return NULL;
+	return (unsigned char*)plaintext;
 }
 
 /**
@@ -91,6 +95,7 @@ unsigned char* DES::decrypt(const unsigned char* ciphertext)
 {
 	//LOGIC:
 	// Same logic as encrypt(), except in step 5. decrypt instead of encrypting
+    return (unsigned char*)ciphertext;
 }
 
 /**
