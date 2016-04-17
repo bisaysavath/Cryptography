@@ -1,8 +1,7 @@
-#include <iostream>
 #include "DES.h"
 
-using namespace std;
-
+const int ENC = 1;
+const int DEC = 0;
 /**
  * Sets the key to use
  * @param key - the key to use
@@ -70,20 +69,36 @@ bool DES::setKey(const unsigned char* keyArray)
  */
 unsigned char* DES::encrypt(const unsigned char* plaintext)
 {
-    cout << plaintext << endl;
-	//LOGIC:
-	//1. Check to make sure that the block is exactly 8 characters (i.e. 64 bits)
-	//2. Declate an array DES_LONG block[2];
-	//3. Use ctol() to convert the first 4 chars into long; store the result in block[0]
-	//4. Use ctol() to convert the second 4 chars into long; store the resul in block[1]
-	//5. Perform des_encrypt1 in order to encrypt the block using this->key (see sample codes for details)
-	//6. Convert the first ciphertext long to 4 characters using ltoc()
-	//7. Convert the second ciphertext long to 4 characters using ltoc()
-	//8. Save the results in the the dynamically allocated char array 
-	// (e.g. unsigned char* bytes = nerw unsigned char[8]).
-	//9. Return the pointer to the dynamically allocated array.
+	unsigned char* ciphertext = (unsigned char*) calloc(8, sizeof(char));
+
+	if ( ciphertext == NULL ) return NULL;
 	
-	return (unsigned char*)plaintext;
+	//1. Check to make sure that the block is exactly 8 characters (i.e. 64 bits)
+	if ( strlen((const char*)plaintext) != 8 )
+		{
+			return NULL;
+		}
+	
+	//2. Declate an array DES_LONG block[2];
+	DES_LONG block[2];
+	
+	//3. Use ctol() to convert the first 4 chars into long; store the result in block[0]
+	block[0] = ctol((unsigned char*)plaintext);
+	
+	//4. Use ctol() to convert the second 4 chars into long; store the resul in block[1]
+	block[1] = ctol((unsigned char*)(plaintext + 4));
+	
+	//5. Perform des_encrypt1 in order to encrypt the block using this->key (see sample codes for details)
+        des_encrypt1(block, this->key, ENC);
+	
+	//6. Convert the first ciphertext long to 4 characters using ltoc()
+	ltoc(block[0], ciphertext);
+	
+	//7. Convert the second ciphertext long to 4 characters using ltoc()
+	ltoc(block[1], ciphertext + 4);
+	
+	//8. Return the pointer to the dynamically allocated ciphertext.	
+	return ciphertext;
 }
 
 /**
@@ -93,9 +108,36 @@ unsigned char* DES::encrypt(const unsigned char* plaintext)
  */
 unsigned char* DES::decrypt(const unsigned char* ciphertext)
 {
-	//LOGIC:
-	// Same logic as encrypt(), except in step 5. decrypt instead of encrypting
-    return (unsigned char*)ciphertext;
+	unsigned char* plaintext = (unsigned char*) calloc(8, sizeof(char));
+
+	if (plaintext == NULL ) return NULL;
+	
+	//1. Check to make sure that the block is exactly 8 characters (i.e. 64 bits)
+	if ( strlen((const char*)ciphertext) != 8 )
+		{
+			return NULL;
+		}
+	
+	//2. Declate an array DES_LONG block[2];
+	DES_LONG block[2];
+	
+	//3. Use ctol() to convert the first 4 chars into long; store the result in block[0]
+	block[0] = ctol((unsigned char*)ciphertext);
+	
+	//4. Use ctol() to convert the second 4 chars into long; store the resul in block[1]
+	block[1] = ctol((unsigned char*)(ciphertext + 4));
+	
+	//5. Perform des_encrypt1 in order to deccrypt the block using this->key (see sample codes for details)
+        des_encrypt1(block, this->key, DEC);
+	
+	//6. Convert the first plaintext long to 4 characters using ltoc()
+	ltoc(block[0], plaintext);
+	
+	//7. Convert the second plaintext long to 4 characters using ltoc()
+	ltoc(block[1], plaintext+4);
+	
+	//8. Return the pointer to the dynamically allocated array plaintext.	
+	return plaintext;
 }
 
 /**
@@ -105,7 +147,7 @@ unsigned char* DES::decrypt(const unsigned char* ciphertext)
  * @return - the long integer (32 bits) where each byte
  * is equivalent to one of the bytes in a character array
  */
-DES_LONG DES::ctol(unsigned char *c) 
+DES_LONG DES::ctol(unsigned char *c)
 {
         /* The long integer */
 	DES_LONG l;
