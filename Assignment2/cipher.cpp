@@ -11,8 +11,8 @@ int main(int argc, char** argv){
 	
 	/* Check number of arguments */
 	if (argc != 6 ){
-		cout << "Not enough arguments" <<endl;
-		cout << "Usage: " << argv[0] <<" DES <KEY> <ENC/DEC> <INPUTFILE> <OUTPUT FILE>" <<endl;
+		cout << "Not enough arguments" << endl;
+		cout << "Usage: " << argv[0] <<" DES <KEY> <ENC/DEC> <INPUTFILE> <OUTPUT FILE>" << endl;
 		exit (-1);
 	}
     
@@ -58,9 +58,11 @@ int main(int argc, char** argv){
 	
 	int size;	
 	unsigned char* cipherText;
-	unsigned char text[8];
+	unsigned char text[9];
 	unsigned char* decryptedText;
 	int padding = 0;
+	text[8] = '\0';
+	
 	while ( (size = fread(text, sizeof(char), 8, inFile)) != 0 ){
 
 		while ( size != 8 ){
@@ -129,7 +131,7 @@ int main(int argc, char** argv){
 	
         fclose(inFile);
 	fclose(outFile);
-	cout << "\nSuccess!!" <<endl;
+	cout << "\nSuccess!!" << endl;
 	
 	return 0;
 }
