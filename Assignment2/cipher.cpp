@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "CipherInterface.h"
 #include "DES.h"
+#include "RSA.h"
 
 using namespace std;
 
