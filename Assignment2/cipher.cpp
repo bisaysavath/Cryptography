@@ -113,7 +113,7 @@ int main(int argc, char** argv){
 					
 					// Perform an XOR
 					for (int i = 0; text[i] != '\0'; i++){
-						text[i] = (text[i] ^ tempCharHolder[i]); // Assuming that plaintext will always be lowercase
+						text[i] ^= tempCharHolder[i]; // Assuming that plaintext will always be lowercase
 					}
 				}
 				
@@ -144,7 +144,7 @@ int main(int argc, char** argv){
 				if(cipherName == "CBC"){
 					// Perform an XOR
 					for (int i = 0; tempCharHolder[i] != '\0'; i++){
-						decryptedText[i] = (decryptedText[i] ^ tempCharHolder[i]); // Assuming that plaintext will always be lowercase
+						decryptedText[i] ^= tempCharHolder[i]; // Assuming that plaintext will always be lowercase
 					}
 					
 					// Store the cipherText to be used the next round
