@@ -1,7 +1,7 @@
 all:	cipher RSA_specific
 
 cipher:	cipher.o DES.o RSA.o
-	g++ cipher.o DES.o -o cipher -lcrypto
+	g++ cipher.o DES.o RSA.o -o cipher -lcrypto
 
 RSA_specific:	RSA_specific.o
 	g++ RSA_specific.o -o RSA_specific -lcrypto

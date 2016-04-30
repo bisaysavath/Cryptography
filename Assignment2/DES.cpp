@@ -31,8 +31,10 @@ bool DES::setKey(const unsigned char* keyArray)
 	while(desKeyIndex != 8)
 	{
 		/* Convert the key if the character is valid */
-		if((this->des_key[desKeyIndex] = twoCharToHexByte(keyArray + keyIndex)) == 'z')
+		if((this->des_key[desKeyIndex] = twoCharToHexByte(keyArray + keyIndex)) == 'z'){
+			fprintf (stdout, "ERROR: Key should have 16 hexadecimal digits.\n"); 
 			return false;
+		}
 		
 		/* Go to the second pair of characters */
 		keyIndex += 2;	
@@ -53,7 +55,7 @@ bool DES::setKey(const unsigned char* keyArray)
 	/* Set the encryption key */
 	if ((keyErrorCode = des_set_key_checked(&des_key, this->key)) != 0)
 	{
-		fprintf(stderr, "\nkey error %d\n", keyErrorCode);
+		fprintf(stderr, "\nDES: key error %d\n", keyErrorCode);
 		
 		return false;
 	}
@@ -74,10 +76,10 @@ unsigned char* DES::encrypt(const unsigned char* plaintext)
 	if ( ciphertext == NULL ) return NULL;
 	
 	//1. Check to make sure that the block is exactly 8 characters (i.e. 64 bits)
-	if ( strlen((const char*)plaintext) != 8 )
-		{
-			return NULL;
-		}
+	// if ( strlen((const char*)plaintext) != 8 )
+	// {
+	// 	return NULL;
+	// }
 	
 	//2. Declate an array DES_LONG block[2];
 	DES_LONG block[2];
@@ -89,7 +91,7 @@ unsigned char* DES::encrypt(const unsigned char* plaintext)
 	block[1] = ctol((unsigned char*)(plaintext + 4));
 	
 	//5. Perform des_encrypt1 in order to encrypt the block using this->key (see sample codes for details)
-        des_encrypt1(block, this->key, ENC);
+	des_encrypt1(block, this->key, ENC);
 	
 	//6. Convert the first ciphertext long to 4 characters using ltoc()
 	ltoc(block[0], ciphertext);
@@ -113,10 +115,10 @@ unsigned char* DES::decrypt(const unsigned char* ciphertext)
 	if (plaintext == NULL ) return NULL;
 	
 	//1. Check to make sure that the block is exactly 8 characters (i.e. 64 bits)
-	if ( strlen((const char*)ciphertext) != 8 )
-		{
-			return NULL;
-		}
+	// if ( strlen((const char*)ciphertext) != 8 )
+	// {
+	// 	return NULL;
+	// }
 	
 	//2. Declate an array DES_LONG block[2];
 	DES_LONG block[2];
@@ -128,7 +130,7 @@ unsigned char* DES::decrypt(const unsigned char* ciphertext)
 	block[1] = ctol((unsigned char*)(ciphertext + 4));
 	
 	//5. Perform des_encrypt1 in order to deccrypt the block using this->key (see sample codes for details)
-        des_encrypt1(block, this->key, DEC);
+	des_encrypt1(block, this->key, DEC);
 	
 	//6. Convert the first plaintext long to 4 characters using ltoc()
 	ltoc(block[0], plaintext);
