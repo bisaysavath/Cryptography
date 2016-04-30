@@ -26,15 +26,12 @@ int main(int argc, char** argv){
 	CipherInterface* cipher;
 	
 	/* Select a cipher */
-	if(cipherName == "DES"){
+	if(cipherName == "DES" || cipherName == "CBC"){
 		/* Create an instance of the DES cipher */	
 		cipher = new DES();
 	}
 	else if(cipherName == "RSA"){
 		cipher = new RSA_433();
-	}
-	else if(cipherName == "CBC"){
-		cipher = new DES();
 	}
 	else if(cipherName == "CFB"){
 		cout << "CFB" << endl;
@@ -141,7 +138,7 @@ int main(int argc, char** argv){
 					}
 				}
 
-				/* Perform decryption */		
+				/* Perform decryption */
 				decryptedText = cipher->decrypt((unsigned char*)text);
 				
 				if(cipherName == "CBC"){
