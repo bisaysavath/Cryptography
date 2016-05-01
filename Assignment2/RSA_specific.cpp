@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 	/* Make sure the text size does not exceed the mod size */
 	if((plainTextSize = strlen(argv[1])) > (MOD_SIZE/8))
 	{
-		fprintf(stderr, "Text size (%d bytes) exceeds the modulus size (%d bytes)\n",
+		fprintf(stderr, "Text size (%lu bytes) exceeds the modulus size (%d bytes)\n",
 			 strlen(argv[1]), (MOD_SIZE/8));
 		
 		exit(-1);
