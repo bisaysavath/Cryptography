@@ -34,12 +34,15 @@ class CipherInterface
 		 */
 		virtual unsigned char* encrypt(const unsigned char* plaintext){ return NULL; }
 
+		virtual unsigned char* encrypt(const unsigned char* plaintext, const int& size, int& cipherTextLen){ return NULL; }
+
 		/**
 		 * Decrypts a string of ciphertext
 		 * @param ciphertext - the ciphertext
 		 * @return - the plaintext
 		 */
 		virtual unsigned char* decrypt(const unsigned char* ciphertext) { return NULL; }
+		virtual unsigned char* decrypt(const unsigned char* ciphertext, const int& size, int& decryptedTextLen){ return NULL; }
 
 		/* The protected members */
 	protected:

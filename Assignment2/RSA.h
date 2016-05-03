@@ -3,11 +3,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/rsa.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
 #include <string.h>
 #include <string>
-#include "CipherInterface.h"
 #include <ctype.h>
+
+#include "CipherInterface.h"
 
 using namespace std;
 
@@ -26,28 +31,30 @@ class RSA_433: public CipherInterface
 			
 		/**
 		 * Sets the key to use
-		 * @param key - the key to use
+		 * @param pubKey - the key to use
 		 * @return - True if the key is valid and False otherwise
 		 */
-		virtual bool setKey(const unsigned char* key);
+		virtual bool setKey(const unsigned char* pubKey);
 
 		/**	
 		 * Encrypts a plaintext string
 		 * @param plaintext - the plaintext string
 		 * @return - the encrypted ciphertext string
 		 */
-		virtual unsigned char* encrypt(const unsigned char* plaintext);
+		virtual unsigned char* encrypt(const unsigned char* plaintext, const int& size, int& cipherTextLen);
 
 		/**
 		 * Decrypts a string of ciphertext
 		 * @param ciphertext - the ciphertext
 		 * @return - the plaintext
 		 */
-		virtual unsigned char* decrypt(const unsigned char* ciphertext);
+		virtual unsigned char* decrypt(const unsigned char* ciphertext, const int& size, int& decryptedTextLen);
 	
 			
 	/* The protected members */
-	//protected:
+	protected:
+		RSA* RSA_key;
+		bool isPublicKey;
 
 };
 
