@@ -26,7 +26,7 @@
 	./cipher DES 0123456789abcdef DEC a.txt b.txt
 
 	For RSA,
-	./cipher RSA privKey.pem ENC small.txt a.txt
+	./cipher RSA privKey.pem ENC big.txt a.txt
 	./cipher RSA pubkey.pem DEC a.txt b.txt
 
 – We implemented the extra credit in a separated folder called Extra_Credit
@@ -49,4 +49,3 @@
 	./cipher DES 0123456789abcdef DEC CFB a.txt b.txt
 
 – Anything special about your submission that we should take note of.
-	1. RSA only encrypts and decrypts files that do not exceeds size of 256 bytes.
