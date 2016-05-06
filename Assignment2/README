@@ -8,7 +8,7 @@
 	C++
 	
 – How to complile and execute the program.
-	To compile, simply, type ''make'' at the terminal (without the quotes).
+	To compile, simply, type 'make' at the terminal (without the quotes).
 	Command to execute the program: ./cipher <CIPHER NAME> <KEY> <ENC/DEC> <INPUT FILE> <OUTPUT FILE>
 	where
 	CIPHER NAME: is the name of the cipher.  Valid names are:
@@ -26,7 +26,7 @@
 	./cipher DES 0123456789abcdef DEC a.txt b.txt
 
 	For RSA,
-	./cipher RSA privKey.pem ENC big.txt a.txt
+	./cipher RSA privkey.pem ENC big.txt a.txt
 	./cipher RSA pubkey.pem DEC a.txt b.txt
 
 – We implemented the extra credit in a separated folder called Extra_Credit
