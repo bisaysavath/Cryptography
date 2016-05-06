@@ -163,33 +163,22 @@ int main(int argc, char** argv){
 		fseek(inFile, 0, SEEK_END);
 		size = ftell(inFile);
 		
-		// Size smaller than 256 can be handled by RSA easily
-		if(size > (MOD_SIZE/8) - 41){
-			// Encryption takes only 215 bytes while decryption takes 256 bytes
-			size = (command == "ENC") ? (MOD_SIZE/8) - 41 : (MOD_SIZE/8);
+		// Size smaller than 256 - 11 can be handled by RSA easily
+		if(size > (MOD_SIZE/8) - 12){
+			// Encryption takes less than 245 bytes because 'RSA_PKCS1_PADDING'
+			// mode requires 11 btyes for padding while decryption takes 256 bytes
+			size = (command == "ENC") ? (MOD_SIZE/8) - 12 : (MOD_SIZE/8);
+			// size = 10;
 		}
 		
 		rewind(inFile);
 
-		/* Check the size */
-		// if(size > (MOD_SIZE/8)){
-		// 	fprintf(stderr, "Text size (%d bytes) exceeds the modulus size (%d bytes)\n",
-		// 	        size, (MOD_SIZE/8));
-
-		// 	fclose(inFile);
-		// 	fclose(outFile);
-		// 	exit(-1);
-		// }
-
-		
-		/* Read the file */
-		// fread(text, sizeof(char), size, inFile);
-
+		int fileSize;
 		if ( command == "ENC" ){
 
-			while ( (fread(text, sizeof(char), size, inFile)) != 0){
+			while ( (fileSize = (fread(text, sizeof(char), size, inFile))) != 0){
 				/* Perform encryption */
-				cipherText = cipher->encrypt(text, size, cipherTextLen);
+				cipherText = cipher->encrypt(text, fileSize, cipherTextLen);
 				if ( cipherText != NULL ){
 					printf("%s", cipherText);
 					fwrite(cipherText, sizeof(char), cipherTextLen, outFile);
@@ -199,9 +188,9 @@ int main(int argc, char** argv){
 		}
 		else if ( command == "DEC" ){
 
-			while ( (fread(text, sizeof(char), size, inFile)) != 0){
+			while ( (fileSize = (fread(text, sizeof(char), size, inFile))) != 0){
 				/* Perform decryption */
-				decryptedText = cipher->decrypt(text, size, decryptedTextLen);
+				decryptedText = cipher->decrypt(text, fileSize, decryptedTextLen);
 				if ( decryptedText != NULL){
 					printf("%s", decryptedText);
 					fwrite(decryptedText, sizeof(char), decryptedTextLen, outFile);
