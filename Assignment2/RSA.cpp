@@ -65,7 +65,7 @@ unsigned char* RSA_433::encrypt( const unsigned char* plaintext, const int& size
 
 	if ( this->isPublicKey){
 		/* Encrypt the message using public key */
-		encryptLen = RSA_public_encrypt(size, plaintext, cipherText, this->RSA_key, RSA_PKCS1_OAEP_PADDING);
+		encryptLen = RSA_public_encrypt(size, plaintext, cipherText, this->RSA_key, RSA_PKCS1_PADDING);
 	}
 	else{
 		/* Encrypt the message using private key */
@@ -105,7 +105,7 @@ unsigned char* RSA_433::decrypt( const unsigned char* ciphertext, const int& siz
 	}
 	else{
 		/* Decrypt the message using private key */
-		decryptLen = RSA_private_decrypt(size, ciphertext, decryptedText, this->RSA_key, RSA_PKCS1_OAEP_PADDING);
+		decryptLen = RSA_private_decrypt(size, ciphertext, decryptedText, this->RSA_key, RSA_PKCS1_PADDING);
 	}
 	
 	/* Check error */

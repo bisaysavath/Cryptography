@@ -16,7 +16,7 @@ int main(int argc, char** argv){
 	/* Check number of arguments */
 	if ( argc != 6 ){
 		cout << "Not enough arguments" <<endl;
-		cout << "Usage: " << argv[0] <<" <DES/RSA>  <KEY> <ENC/DEC> <INPUTFILE> <OUTPUT FILE>" <<endl;
+		cout << "Usage: " << argv[0] <<" <DES/RSA> <KEY> <ENC/DEC> <INPUTFILE> <OUTPUT FILE>" <<endl;
 		exit (-1);
 	}
 
@@ -155,55 +155,54 @@ int main(int argc, char** argv){
 
 	/************* RSA ENCRYPTION/DECRYPTION ******************/
 	else {
-		unsigned char text[MOD_SIZE/8];
+		unsigned char text[(MOD_SIZE/8)];
 		int cipherTextLen = -1;
 		int decryptedTextLen = -1;
 
 		/* Get the size of the file */
 		fseek(inFile, 0, SEEK_END);
 		size = ftell(inFile);
+		
+		// Size smaller than 256 - 11 can be handled by RSA easily
+		if(size > (MOD_SIZE/8) - 12){
+			// Encryption takes less than 245 bytes because 'RSA_PKCS1_PADDING'
+			// mode requires 11 btyes for padding while decryption takes 256 bytes
+			size = (command == "ENC") ? (MOD_SIZE/8) - 12 : (MOD_SIZE/8);
+			// size = 10;
+		}
+		
 		rewind(inFile);
 
-		/* Check the size */
-		if(size > (MOD_SIZE/8)){
-			fprintf(stderr, "Text size (%d bytes) exceeds the modulus size (%d bytes)\n",
-			        size, (MOD_SIZE/8));
+		int fileSize;
+		if ( command == "ENC" ){
 
-			fclose(inFile);
-			fclose(outFile);
-			exit(-1);
-		}
-
-		else {
-			/* Read the file */
-			fread(text, sizeof(char), size, inFile);
-
-			if ( command == "ENC" ){
-
+			while ( (fileSize = (fread(text, sizeof(char), size, inFile))) != 0){
 				/* Perform encryption */
-				cipherText = cipher->encrypt(text, size, cipherTextLen);
+				cipherText = cipher->encrypt(text, fileSize, cipherTextLen);
 				if ( cipherText != NULL ){
 					printf("%s", cipherText);
 					fwrite(cipherText, sizeof(char), cipherTextLen, outFile);
 					free(cipherText);
 				}
 			}
-			else if ( command == "DEC" ){
+		}
+		else if ( command == "DEC" ){
 
+			while ( (fileSize = (fread(text, sizeof(char), size, inFile))) != 0){
 				/* Perform decryption */
-				decryptedText = cipher->decrypt(text, size, decryptedTextLen);
+				decryptedText = cipher->decrypt(text, fileSize, decryptedTextLen);
 				if ( decryptedText != NULL){
 					printf("%s", decryptedText);
 					fwrite(decryptedText, sizeof(char), decryptedTextLen, outFile);
 					free(decryptedText);
 				}
 			}
-			else {
-				cout << "ERROR: Invalid command " <<endl;
-				fclose(inFile);
-				fclose(outFile);
-				exit(-1);
-			}
+		}
+		else {
+			cout << "ERROR: Invalid command " <<endl;
+			fclose(inFile);
+			fclose(outFile);
+			exit(-1);
 		}
 	}
 	

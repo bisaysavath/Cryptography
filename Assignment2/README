@@ -1,12 +1,51 @@
-To compile, simply, type ''make'' at the terminal (without the quotes).
-
-Please do not forget to include a README file in your submission.
-It's worth 5 points.
-
-Your README file should include:
-
 – Names and email addresses of all partners.
-– The programming language you use (e.g. C++ or Java)
-– How to execute your program.
-– Whether you implemented the extra credit.
+	Duy Do 				ddo@csu.fullerton.edu
+	Billy Saysavath		bisaysavath@csu.fullerton.edu
+	Tevin Vu			tuanvu01@csu.fullerton.edu
+	Holly Ho			hollyh@csu.fullerton.edu
+	
+– The programming language we use
+	C++
+	
+– How to complile and execute the program.
+	To compile, simply, type 'make' at the terminal (without the quotes).
+	Command to execute the program: ./cipher <CIPHER NAME> <KEY> <ENC/DEC> <INPUT FILE> <OUTPUT FILE>
+	where
+	CIPHER NAME: is the name of the cipher.  Valid names are:
+		DES: Data Encryption Standard
+	  	RSA: RSA Algorithm
+
+	KEY: the encryption key to use
+	ENC/DEC: whether to encrypt or decrypt, respectively.
+	INPUT FILE: the file from which to read the input.
+	OUTPUT FILE: the file to which the output shall be written
+
+	Ex:
+	For DES,
+	./cipher DES 0123456789abcdef ENC big.txt a.txt
+	./cipher DES 0123456789abcdef DEC a.txt b.txt
+
+	For RSA,
+	./cipher RSA privkey.pem ENC big.txt a.txt
+	./cipher RSA pubkey.pem DEC a.txt b.txt
+
+– We implemented the extra credit in a separated folder called Extra_Credit
+	In order to run CBC and CFB, first type 'make' at the terminal (without the quotes).
+	Command to execute the program: ./cipher DES <KEY> <ENC/DEC> <CBC/CFB> <INPUTFILE> <OUTPUT FILE>
+	
+	KEY: the encryption key to use
+	ENC/DEC: whether to encrypt or decrypt, respectively.
+	CBC/CFB: whether to use Cipher Block Chaining (CBC) or Cipher Feedback (CFB) mode
+	INPUT FILE: the file from which to read the input.
+	OUTPUT FILE: the file to which the output shall be written
+	
+	Ex:
+	For CBC,
+	./cipher DES 0123456789abcdef ENC CBC big.txt a.txt
+	./cipher DES 0123456789abcdef DEC CBC a.txt b.txt
+
+	For CFB,
+	./cipher DES 0123456789abcdef ENC CFB big.txt a.txt
+	./cipher DES 0123456789abcdef DEC CFB a.txt b.txt
+
 – Anything special about your submission that we should take note of.
