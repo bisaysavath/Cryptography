@@ -52,23 +52,23 @@ def recvAll(sock, numBytes):
 
     # The buffer
     recvBuff = ""
-    
+
     # The temporary buffer
     tmpBuff = ""
-	
+
     # Keep receiving till all is received
     while len(recvBuff) < numBytes:
-	    
-	# Attempt to receive bytes
-	tmpBuff =  sock.recv(numBytes)
-	    
-	# The other side has closed the socket
-	if not tmpBuff:
+
+        # Attempt to receive bytes
+        tmpBuff =  sock.recv(numBytes)
+
+        # The other side has closed the socket
+        if not tmpBuff:
             return 0
-		    
-	# Add the received bytes to the buffer
+
+        # Add the received bytes to the buffer
         recvBuff += tmpBuff
-	    
+
     return recvBuff
 
 # ************************************************
@@ -78,7 +78,7 @@ def recvAll(sock, numBytes):
 # @return - Total bytes sent
 # *************************************************
 def sendAll(sock, fileData):
-    
+
     # The number of bytes sent
     totalSent = 0
 
@@ -119,7 +119,7 @@ def getRequest(sock):
 # @return - the account information
 # *************************************************
 def getAccountInfo(sock):
-    
+
     # Get fileNameSize
     accountSizeBuff = recvAll(sock, 10)    
     accountSize = int(accountSizeBuff)
@@ -160,6 +160,7 @@ if __name__ == "__main__":
 
     # Start listening on the socket
     welcomeSock.listen(10)
+    print "Server is listening at port: " + str(listenPort)
 
     input = [welcomeSock, sys.stdin]
     

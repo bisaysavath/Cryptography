@@ -2,6 +2,7 @@ import socket
 import os
 import sys
 import commands
+import getpass
 
 LOGIN = "11"
 CHECKSTATUS = "12"
@@ -19,23 +20,23 @@ def recvAll(sock, numBytes):
 
     # The buffer
     recvBuff = ""
-    
+
     # The temporary buffer
     tmpBuff = ""
-	
+
     # Keep receiving till all is received
     while len(recvBuff) < numBytes:
-	    
-	# Attempt to receive bytes
-	tmpBuff =  sock.recv(numBytes)
-	    
-	# The other side has closed the socket
-	if not tmpBuff:
+
+        # Attempt to receive bytes
+        tmpBuff =  sock.recv(numBytes)
+
+        # The other side has closed the socket
+        if not tmpBuff:
             return 0
-		    
-	# Add the received bytes to the buffer
+
+        # Add the received bytes to the buffer
         recvBuff += tmpBuff
-	    
+
     return recvBuff
 
 # ************************************************
@@ -68,28 +69,53 @@ def prepareHeader(header):
         header = "0" + header
 
     return header
-
-if len(sys.argv) != 2:
-    print "Usage: python client.py 'username;password' "
-    exit(-1)
-
-serverAddr = "localhost"
-serverPort = 1234
-
-# Create a TCP socket
-clientSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Connect to the server
-clientSock.connect((serverAddr, serverPort))
     
-accountInfo = sys.argv[1]
+# ************************************************
+# Handle log in
+# *************************************************
+def userLogIn():
 
-accountInfoSize = str(len(accountInfo))
+    print "*********************************"
+    print "**   Welcome to What's Chat!   **"
+    print "*********************************"
+    print ""
 
-header = prepareHeader(accountInfoSize)
+    while (True):
+        username = raw_input("Username: ")
+        password = getpass.getpass("Password: ")
 
-sendAll(clientSock, LOGIN + header + accountInfo)
+        accountInfo = str(username) + ";" + str(password)
+        accountInfoSize = str(len(accountInfo))
 
-print clientSock.recv(2)
+        header = prepareHeader(accountInfoSize)
 
-clientSock.close()
+        sendAll(clientSock, LOGIN + header + accountInfo)
+
+        if clientSock.recv(2) == "1":
+            print "Welcome back, " + username + "!"
+            return True
+        else:
+            print "Wrong credentials. Please try again."
+            print ""
+
+    # Should never get here
+    return False
+
+if __name__ == "__main__":
+
+    if len(sys.argv) > 1:
+        print "Usage: python client.py"
+        exit(-1)
+
+    serverAddr = "localhost"
+    serverPort = 1234
+
+    # Create a TCP socket
+    clientSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Connect to the server
+    clientSock.connect((serverAddr, serverPort))
+
+    userLogIn()
+
+    clientSock.close()
