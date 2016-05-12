@@ -5,6 +5,7 @@ import commands
 import os
 import sys
 import select
+import json
 
 FAIL = "0"
 OK = "1"
@@ -110,7 +111,7 @@ def prepareHeader(header):
 def getRequest(sock):
 
     # The request command is the first 2 bytes of the data
-    request = recvAll(sock, 2)    
+    request = recvAll(sock, 2)
     return str(request)
 
 # ************************************************
@@ -121,14 +122,13 @@ def getRequest(sock):
 def getAccountInfo(sock):
 
     # Get fileNameSize
-    accountSizeBuff = recvAll(sock, 10)    
+    accountSizeBuff = recvAll(sock, 10)
     accountSize = int(accountSizeBuff)
 
     # Get fileName
     accountInfo = recvAll(sock, accountSize)
     return accountInfo
 
-    
 if __name__ == "__main__":
 
     # Create some accounts
@@ -206,7 +206,21 @@ if __name__ == "__main__":
                         s.send(OK)
                     else:
                         s.send(FAIL)
-             
+                elif request == CHECKSTATUS:
+                    print "Check online users..."
+                    
+                    onlineUserList = []
+                    
+                    for u in onlineUsers:
+                        print onlineUsers[u].getName()
+                        onlineUserList.append(onlineUsers[u].getName())
+                        
+                    jsonParsedOnlineList = json.dumps(onlineUserList)
+                    jsonParsedOnlineListSize = str(len(jsonParsedOnlineList))
+                    
+                    header = prepareHeader(jsonParsedOnlineListSize)
+                    
+                    sendAll(s, header + jsonParsedOnlineList)
                 else:
                     s.close()
                     input.remove(s)

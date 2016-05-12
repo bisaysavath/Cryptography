@@ -3,6 +3,10 @@ import os
 import sys
 import commands
 import getpass
+import json
+
+FAIL = "0"
+OK = "1"
 
 LOGIN = "11"
 CHECKSTATUS = "12"
@@ -46,7 +50,7 @@ def recvAll(sock, numBytes):
 # @return - Total bytes sent
 # *************************************************
 def sendAll(sock, fileData):
-    
+
     # The number of bytes sent
     totalSent = 0
 
@@ -72,13 +76,8 @@ def prepareHeader(header):
     
 # ************************************************
 # Handle log in
-# *************************************************
+# ************************************************
 def userLogIn():
-
-    print "*********************************"
-    print "**   Welcome to What's Chat!   **"
-    print "*********************************"
-    print ""
 
     while (True):
         username = raw_input("Username: ")
@@ -91,15 +90,49 @@ def userLogIn():
 
         sendAll(clientSock, LOGIN + header + accountInfo)
 
-        if clientSock.recv(2) == "1":
+        if clientSock.recv(2) == OK:
             print "Welcome back, " + username + "!"
+            print ""
             return True
         else:
-            print "Wrong credentials. Please try again."
+            userChoice = raw_input("Wrong credentials. Try again? (y/n) ")
+            if userChoice.lower() == "n":
+                return False
             print ""
 
-    # Should never get here
-    return False
+# ************************************************
+# Handle Main Menu
+# ************************************************
+def mainMenu():
+
+    print "Main Menu:"
+    print "1. Check online users"
+    print "2. Start chatting"
+    print "3. Quit"
+    print ""
+    
+    userChoice = raw_input("Please selection an option: ")
+    
+    return int(userChoice)
+    
+# ************************************************
+# Handle checking online users
+# ************************************************
+def checkOnlineUser():
+
+    sendAll(clientSock, CHECKSTATUS)
+    
+    dataSizeBuff = recvAll(clientSock, 10)
+    dataSize = int(dataSizeBuff)
+    
+    jsonParsedOnlineList = recvAll(clientSock, dataSize)
+    onlineUserList = json.loads(jsonParsedOnlineList)
+    
+    print "Online users:"
+    
+    for user in onlineUserList:
+        print user
+    print ""
 
 if __name__ == "__main__":
 
@@ -115,7 +148,21 @@ if __name__ == "__main__":
 
     # Connect to the server
     clientSock.connect((serverAddr, serverPort))
+    
+    print "*********************************"
+    print "**   Welcome to What's Chat!   **"
+    print "*********************************"
+    print ""
 
-    userLogIn()
+    if userLogIn():
+        while(True):
+            userChoice = mainMenu()
+        
+            if userChoice == 1:
+                checkOnlineUser()
+            else:
+                break
+    else:
+        print "Bye!"
 
     clientSock.close()
