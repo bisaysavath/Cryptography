@@ -5,13 +5,16 @@ import commands
 import getpass
 import cPickle
 import select
+import re
 
 FAIL = "0"
 OK = "1"
 
 LOGIN = "11"
 CHECKSTATUS = "12"
-CHAT = "13"
+INVITE = "13"
+CHAT = "14"
+CHECKCHATMEM = "15"
 
 # ************************************************
 # Receives the specified number of bytes
@@ -101,7 +104,7 @@ def userLogIn():
                 return False
             print ""
 
-            # ************************************************
+# ************************************************
 # Handle checking online users
 # ************************************************
 def checkOnlineUser():
@@ -117,7 +120,16 @@ def checkOnlineUser():
     for user in onlineUserList:
         print user
     print ""
+
+# ************************************************
+# Function to add header to data
+# ************************************************
+def preparePacket(data):
     
+    dataSize = str(len(data))
+    header = prepareHeader(dataSize)
+    return header + data
+
 # ************************************************
 # Process after user successfully logged in
 # *************************************************
@@ -139,9 +151,14 @@ def process(sock):
                 # receive data from the server
                 # get the reponse code
                 response = s.recv(2)
-                
+
+                # server sent the list of online users
                 if response == CHECKSTATUS:
                     checkOnlineUser()
+
+                # server sent chat message from other users
+                if response == CHAT:
+                    print "\n" + s.recv(100) + "\n"
                     
 
             elif s == sys.stdin:
@@ -157,9 +174,22 @@ def process(sock):
                 elif msg == "::online":
                     sendAll(clientSock, CHECKSTATUS)
 
+                # user wants to invite online users to chat
+                elif msg.startswith('::invite'):
+                    names = ""
+                    matchObj = re.match( r'::invite (.*)', msg)
+                    if not matchObj:
+                        print "Invalid command"
+                    else:
+                        names = matchObj.group(1)
+                        if len(names) > 0:
+                            sendAll(clientSock, INVITE + preparePacket(names))
+                        
                 # Other messages
                 else:
-                    print msg
+                    userMsgSize = str(len(msg))
+                    header = prepareHeader(userMsgSize)
+                    sendAll(clientSock, CHAT + header + msg)
 
 # ************************************************
 # Direction
@@ -175,70 +205,6 @@ def directionMenu():
     print "**************************************************************************"
     print "\n"
     
-# ************************************************
-# Handle chat
-# ************************************************
-def chat():
-
-    while (True):
-        # Wait for input from stdin & socket
-        inputready, outputready, exceptready = select.select([0, clientSock], [], [])
-        
-        for i in inputready:
-            if i == 0:
-                # grab message
-                userMsg = raw_input("Your message: ")
-
-                if (userMsg == "quit()"):
-                    break;
-                
-                userMsgSize = str(len(userMsg))
-
-                header = prepareHeader(userMsgSize)
-
-                sendAll(clientSock, CHAT + header + userMsg)
-                # try:
-                #     # encrypt
-                #     data = self.encryptor.encrypt(data, 0)
-                #     data = data[0]
-
-                #     # append signature
-                #     signkey = self.decryptor
-                #     message_hash = SHA.new()
-                #     message_hash.update(data)
-
-                #     signer = PKCS1_PSS.new(signkey)
-                #     signature = signer.sign(message_hash)
-                #     data = '%s#^[[%s' % (data, signature)
-
-                # except ValueError:
-                #     print 'Too large text, cannot encrypt, not sending.'
-                #     data = None
-
-                # if data:
-                #     send(self.sock, data)
-
-            elif i == clientSock:
-                dataSizeBuff = recvAll(clientSock, 10)
-                dataSize = int(dataSizeBuff)
-                
-                getMessage = recvAll(clientSock, dataSize)
-                print getMessage
-                # data = receive(self.sock)
-
-                # if not data:
-                #     print 'Shutting down.'
-                #     # self.flag = True
-                #     break
-
-                # else:
-                #     if 'PLAIN:' in data:
-                #         data = data.strip('PLAIN:').strip()
-                #     else:
-                #         data = self.decryptor.decrypt(data)
-
-                #     sys.stdout.write(data + '\n')
-                #     sys.stdout.flush()
 
 if __name__ == "__main__":
 
