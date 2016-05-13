@@ -3,7 +3,7 @@ import os
 import sys
 import commands
 import getpass
-import json
+import cPickle
 
 FAIL = "0"
 OK = "1"
@@ -125,8 +125,8 @@ def checkOnlineUser():
     dataSizeBuff = recvAll(clientSock, 10)
     dataSize = int(dataSizeBuff)
     
-    jsonParsedOnlineList = recvAll(clientSock, dataSize)
-    onlineUserList = json.loads(jsonParsedOnlineList)
+    serializedOnlineList = recvAll(clientSock, dataSize)
+    onlineUserList = cPickle.loads(serializedOnlineList)
     
     print "Online users:"
     

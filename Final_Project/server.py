@@ -5,7 +5,7 @@ import commands
 import os
 import sys
 import select
-import json
+import cPickle
 
 FAIL = "0"
 OK = "1"
@@ -215,12 +215,12 @@ if __name__ == "__main__":
                         print onlineUsers[u].getName()
                         onlineUserList.append(onlineUsers[u].getName())
                         
-                    jsonParsedOnlineList = json.dumps(onlineUserList)
-                    jsonParsedOnlineListSize = str(len(jsonParsedOnlineList))
+                    serializedOnlineList = cPickle.dumps(onlineUserList)
+                    serializedOnlineListSize = str(len(serializedOnlineList))
                     
-                    header = prepareHeader(jsonParsedOnlineListSize)
+                    header = prepareHeader(serializedOnlineListSize)
                     
-                    sendAll(s, header + jsonParsedOnlineList)
+                    sendAll(s, header + serializedOnlineList)
                 else:
                     s.close()
                     input.remove(s)
