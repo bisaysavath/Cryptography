@@ -81,10 +81,8 @@ def prepareHeader(header):
 def userLogIn():
 
     while (True):
-        # username = raw_input("Username: ")
-        # password = getpass.getpass("Password: ")
-        username = "Duy"
-        password = "abc"
+        username = raw_input("Username: ")
+        password = getpass.getpass("Password: ")
 
         accountInfo = str(username) + ";" + str(password)
         accountInfoSize = str(len(accountInfo))
@@ -103,27 +101,10 @@ def userLogIn():
                 return False
             print ""
 
-# ************************************************
-# Handle Main Menu
-# ************************************************
-def mainMenu():
-
-    print "Main Menu:"
-    print "1. Check online users"
-    print "2. Start chatting"
-    print "3. Quit"
-    print ""
-    
-    userChoice = raw_input("Please selection an option: ")
-    
-    return int(userChoice)
-    
-# ************************************************
+            # ************************************************
 # Handle checking online users
 # ************************************************
 def checkOnlineUser():
-
-    sendAll(clientSock, CHECKSTATUS)
     
     dataSizeBuff = recvAll(clientSock, 10)
     dataSize = int(dataSizeBuff)
@@ -132,10 +113,67 @@ def checkOnlineUser():
     onlineUserList = cPickle.loads(serializedOnlineList)
     
     print "Online users:"
-    
+
     for user in onlineUserList:
         print user
     print ""
+    
+# ************************************************
+# Process after user successfully logged in
+# *************************************************
+def process(sock):
+
+    input = [sock, sys.stdin]
+    
+    # *************************************************
+    #           WHILE LOOP
+    # *************************************************
+    running = 1
+    while running:
+        
+        inputready,outputready,exceptready = select.select(input,[],[])
+
+        for s in inputready:
+
+            if s == sock:
+                # receive data from the server
+                # get the reponse code
+                response = s.recv(2)
+                
+                if response == CHECKSTATUS:
+                    checkOnlineUser()
+                    
+
+            elif s == sys.stdin:
+                # handle standard input
+                msg = sys.stdin.readline().strip()
+
+                # user wants to quit
+                if msg == "::quit":
+                    running = 0
+                    break
+
+                # user wants to check who are online
+                elif msg == "::online":
+                    sendAll(clientSock, CHECKSTATUS)
+
+                # Other messages
+                else:
+                    print msg
+
+# ************************************************
+# Direction
+# ************************************************
+def directionMenu():
+
+    print "**************************************************************************"
+    print "*****                DIRECTION                                       *****"
+    print "***** Type ::online to check online users                            *****"
+    print "***** Type ::invite name1,name2... to invite online users to chat    *****"
+    print "***** Type ::quit to quit the program                                *****"
+    print "***** Otherwise, any input message will be chat message              *****"
+    print "**************************************************************************"
+    print "\n"
     
 # ************************************************
 # Handle chat
@@ -144,7 +182,7 @@ def chat():
 
     while (True):
         # Wait for input from stdin & socket
-        inputready, outputready, exceptrdy = select.select([0, clientSock], [], [])
+        inputready, outputready, exceptready = select.select([0, clientSock], [], [])
         
         for i in inputready:
             if i == 0:
@@ -223,15 +261,9 @@ if __name__ == "__main__":
     print ""
 
     if userLogIn():
-        while(True):
-            userChoice = mainMenu()
-        
-            if userChoice == 1:
-                checkOnlineUser()
-            elif userChoice == 2:
-                chat()
-            else:
-                break
+        print "Successfully logged in"
+        directionMenu()
+        process(clientSock)
     else:
         print "Bye!"
 

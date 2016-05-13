@@ -220,7 +220,8 @@ if __name__ == "__main__":
                     
                     header = prepareHeader(serializedOnlineListSize)
                     
-                    sendAll(s, header + serializedOnlineList)
+                    sendAll(s, CHECKSTATUS + header + serializedOnlineList)
+                    
                 elif request == CHAT:
                     print "User sent: ",
                     getMessageSizeBuff = recvAll(s, 10)
