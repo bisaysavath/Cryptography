@@ -4,6 +4,7 @@ import sys
 import commands
 import getpass
 import cPickle
+import select
 
 FAIL = "0"
 OK = "1"
@@ -80,8 +81,10 @@ def prepareHeader(header):
 def userLogIn():
 
     while (True):
-        username = raw_input("Username: ")
-        password = getpass.getpass("Password: ")
+        # username = raw_input("Username: ")
+        # password = getpass.getpass("Password: ")
+        username = "Duy"
+        password = "abc"
 
         accountInfo = str(username) + ";" + str(password)
         accountInfoSize = str(len(accountInfo))
@@ -133,6 +136,71 @@ def checkOnlineUser():
     for user in onlineUserList:
         print user
     print ""
+    
+# ************************************************
+# Handle chat
+# ************************************************
+def chat():
+
+    while (True):
+        # Wait for input from stdin & socket
+        inputready, outputready, exceptrdy = select.select([0, clientSock], [], [])
+        
+        for i in inputready:
+            if i == 0:
+                # grab message
+                userMsg = raw_input("Your message: ")
+
+                if (userMsg == "quit()"):
+                    break;
+                
+                userMsgSize = str(len(userMsg))
+
+                header = prepareHeader(userMsgSize)
+
+                sendAll(clientSock, CHAT + header + userMsg)
+                # try:
+                #     # encrypt
+                #     data = self.encryptor.encrypt(data, 0)
+                #     data = data[0]
+
+                #     # append signature
+                #     signkey = self.decryptor
+                #     message_hash = SHA.new()
+                #     message_hash.update(data)
+
+                #     signer = PKCS1_PSS.new(signkey)
+                #     signature = signer.sign(message_hash)
+                #     data = '%s#^[[%s' % (data, signature)
+
+                # except ValueError:
+                #     print 'Too large text, cannot encrypt, not sending.'
+                #     data = None
+
+                # if data:
+                #     send(self.sock, data)
+
+            elif i == clientSock:
+                dataSizeBuff = recvAll(clientSock, 10)
+                dataSize = int(dataSizeBuff)
+                
+                getMessage = recvAll(clientSock, dataSize)
+                print getMessage
+                # data = receive(self.sock)
+
+                # if not data:
+                #     print 'Shutting down.'
+                #     # self.flag = True
+                #     break
+
+                # else:
+                #     if 'PLAIN:' in data:
+                #         data = data.strip('PLAIN:').strip()
+                #     else:
+                #         data = self.decryptor.decrypt(data)
+
+                #     sys.stdout.write(data + '\n')
+                #     sys.stdout.flush()
 
 if __name__ == "__main__":
 
@@ -160,6 +228,8 @@ if __name__ == "__main__":
         
             if userChoice == 1:
                 checkOnlineUser()
+            elif userChoice == 2:
+                chat()
             else:
                 break
     else:

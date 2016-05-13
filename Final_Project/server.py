@@ -221,6 +221,14 @@ if __name__ == "__main__":
                     header = prepareHeader(serializedOnlineListSize)
                     
                     sendAll(s, header + serializedOnlineList)
+                elif request == CHAT:
+                    print "User sent: ",
+                    getMessageSizeBuff = recvAll(s, 10)
+                    getMessageSize = int(getMessageSizeBuff)
+
+                    # Get fileName
+                    getMessage = recvAll(s, getMessageSize)
+                    print getMessage
                 else:
                     s.close()
                     input.remove(s)
@@ -229,4 +237,3 @@ if __name__ == "__main__":
 
     # Close server socket
     welcomeSock.close() 
-
