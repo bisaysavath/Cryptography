@@ -15,6 +15,7 @@ CHECKSTATUS = "12"
 INVITE = "13"
 CHAT = "14"
 CHECKCHATMEM = "15"
+MEMBEROFFLINE = "16"
 
 # ************************************************
 # Receives the specified number of bytes
@@ -107,7 +108,7 @@ def userLogIn():
 # ************************************************
 # Handle checking online users
 # ************************************************
-def checkOnlineUser():
+def checkOnlineUser(clientSock):
     
     dataSizeBuff = recvAll(clientSock, 10)
     dataSize = int(dataSizeBuff)
@@ -148,33 +149,45 @@ def process(sock):
         for s in inputready:
 
             if s == sock:
-                # receive data from the server
+                # Receive data from the server
                 # get the reponse code
                 response = s.recv(2)
 
-                # server sent the list of online users
+                # Server sent the list of online users
                 if response == CHECKSTATUS:
-                    checkOnlineUser()
+                    checkOnlineUser(s)
 
-                # server sent chat message from other users
+                # Server sent chat message from other users
                 if response == CHAT:
-                    print "\n" + s.recv(100) + "\n"
-                    
+                    print s.recv(100) + "\n"
 
+                # Server sent notification about offline user
+                if response == MEMBEROFFLINE:
+                    print s.recv(100) + "\n"
+
+                # Server responded to chat invitation
+                if response == INVITE:
+                    messageSizeBuff = recvAll(s, 10)
+                    messageSize = int(messageSizeBuff)
+
+                    # Print the message from server
+                    print recvAll(s, messageSize)
+
+            
             elif s == sys.stdin:
-                # handle standard input
+                # Handle standard input
                 msg = sys.stdin.readline().strip()
 
-                # user wants to quit
+                # User wants to quit
                 if msg == "::quit":
                     running = 0
                     break
 
-                # user wants to check who are online
+                # User wants to check who are online
                 elif msg == "::online":
-                    sendAll(clientSock, CHECKSTATUS)
+                    sendAll(sock, CHECKSTATUS)
 
-                # user wants to invite online users to chat
+                # User wants to invite online users to chat
                 elif msg.startswith('::invite'):
                     names = ""
                     matchObj = re.match( r'::invite (.*)', msg)
@@ -183,13 +196,14 @@ def process(sock):
                     else:
                         names = matchObj.group(1)
                         if len(names) > 0:
-                            sendAll(clientSock, INVITE + preparePacket(names))
+                            sendAll(sock, INVITE + preparePacket(names))
                         
                 # Other messages
                 else:
-                    userMsgSize = str(len(msg))
-                    header = prepareHeader(userMsgSize)
-                    sendAll(clientSock, CHAT + header + msg)
+                    message = msg.strip()
+                    if message:
+                        sendAll(sock, CHAT + preparePacket(msg))
+
 
 # ************************************************
 # Direction
@@ -197,7 +211,7 @@ def process(sock):
 def directionMenu():
 
     print "**************************************************************************"
-    print "*****                DIRECTION                                       *****"
+    print "*****                INSTRUCTION                                     *****"
     print "***** Type ::online to check online users                            *****"
     print "***** Type ::invite name1,name2... to invite online users to chat    *****"
     print "***** Type ::quit to quit the program                                *****"

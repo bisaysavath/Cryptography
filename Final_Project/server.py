@@ -15,6 +15,7 @@ CHECKSTATUS = "12"
 INVITE = "13"
 CHAT = "14"
 CHECKCHATMEM = "15"
+MEMBEROFFLINE = "16"
 
 # List of online users
 onlineUsers = {}
@@ -112,6 +113,15 @@ def prepareHeader(header):
     return header
 
 # ************************************************
+# Function to add header to data
+# ************************************************
+def preparePacket(data):
+    
+    dataSize = str(len(data))
+    header = prepareHeader(dataSize)
+    return header + data
+
+# ************************************************
 # Get the request from client
 # @param sock - the socket from which to receive
 # @return - the request
@@ -144,22 +154,147 @@ def getAccountInfo(sock):
 # *************************************************
 def broadcastMessage(sock, message):
     for m in chatMemberList:
-        # send the message only to peers
+        # Send the message only to peers
         if m != sock :
             try :
                 m.send(CHAT + onlineUsers[sock].getName() + ": " + message)
             except :
-                # broken socket connection
+                # Broken socket connection
                 m.close()
 
+# ****************************************************
+# Notify all users in the chat session about an user
+# just gone offline
+# @param name: name of user that has just gone offline
+# ****************************************************
+def notifyOfflineMember(name):
+    for m in chatMemberList:
+        # Send notify to peers
+        try:
+            m.send(MEMBEROFFLINE + name + " is offline")
+        except:
+            # Broken socket connection
+            m.close()
 
-    
+# ****************************************************
+# Handle a client that is trying to log in
+# @param sock: client's socket
+# @param listOfAccounts: all valid accounts on the system
+# ****************************************************
+def handleLogin(sock, listOfAccounts):
+    accountInfo = getAccountInfo(sock)
+    status = False
+    print "User at socket {0} is trying to log in".format(sock)
+    for user in listOfAccounts:
+        status = user.verifyAccount(accountInfo)
+        if status:
+            user.setSocket(sock)
+            onlineUsers[sock] = user
+            break
+        
+    if status:
+        print "Successfully logged in"
+        sock.send(OK)
+    else:
+        print "Failed to log in"
+        sock.send(FAIL)
+
+# ****************************************************
+# Handle user's request to check all online users
+# @param sock: user's socket
+# ****************************************************
+def handleCheckOnlineUsers(sock):
+    print "Check online users..."
+                    
+    onlineUserList = []
+                    
+    for u in onlineUsers:
+        print onlineUsers[u].getName()
+        onlineUserList.append(onlineUsers[u].getName())
+                        
+    serializedOnlineList = cPickle.dumps(onlineUserList)                    
+    sendAll(sock, CHECKSTATUS + preparePacket(serializedOnlineList))
+
+# ****************************************************
+# Handle chat messages sent from an user
+# @param sock: user's socket
+# ****************************************************
+def handelChatMessages(sock):
+    print onlineUsers[sock].getName() + " sent: ",
+    getMessageSizeBuff = recvAll(sock, 10)
+    getMessageSize = int(getMessageSizeBuff)
+
+    # Get the message
+    getMessage = recvAll(sock, getMessageSize)
+    print getMessage
+
+    # Send the message to everyone in the chat session
+    broadcastMessage(sock, getMessage)
+
+# ****************************************************
+# Handle chat invitaion
+# @param sock: user's socket
+# ****************************************************
+def handelInvitation(sock):
+     # Add user to chatMemberList
+    if not sock in chatMemberList:
+        chatMemberList.append(sock)
+                        
+    dataSizeBuff = recvAll(sock, 10)
+    dataSize = int(dataSizeBuff)
+
+    # Get list of names
+    listOfNames = recvAll(sock, dataSize)
+                    
+    Names = []
+    if len(listOfNames) > 0:
+        Names = listOfNames.split(',')
+
+    found = False
+    message = ""
+    for name in Names:
+        print "User invites {0} to join chat session".format(name)
+        # Check name with online users
+        for u in onlineUsers:
+            if onlineUsers[u].getName() == name.strip():
+                found = True
+                break
+
+        # Found the user
+        if found:
+            if not u in chatMemberList:
+                message = "{0} is added to the chat session".format(onlineUsers[u].getName())
+                chatMemberList.append(u)
+                sendAll(sock, INVITE +  preparePacket(message))
+
+                # Notify user that is added to session
+                sendAll(u, INVITE + preparePacket("{0} invited you to the chat session".format(onlineUsers[sock].getName())))
+            else:
+                message = "{0} is alreay in the chat session".format(onlineUsers[u].getName())
+                print message
+                sendAll(sock, INVITE +  preparePacket(message))             
+        else:
+           message = name + " is not online"
+           sendAll(sock, INVITE +  preparePacket(message))
+
+        found = False
+                          
+
+    # Print out list of chat members
+    print "\nList of chat members:"
+    for m in chatMemberList:
+        print onlineUsers[m].getName()
+        
+# ****************************************************
+# Main of the server
+# ****************************************************
 if __name__ == "__main__":
 
     # Create some accounts
     listOfAccounts = []
     listOfAccounts.append(User("Duy", "abc", 0))
-    listOfAccounts.append(User("Eric", "123", 0))
+    listOfAccounts.append(User("Billy", "123", 0))
+    listOfAccounts.append(User("Holy", "456", 0))
     
     #if len(sys.argv) != 2:
     #    print "Usage: python server.py <PORT NUMBER>"
@@ -197,108 +332,44 @@ if __name__ == "__main__":
         for s in inputready:
 
             if s == welcomeSock:
-                # handle the server socket
+                # Handle the server socket
                 client, address = welcomeSock.accept()
                 input.append(client)
 
             elif s == sys.stdin:
-                # handle standard input
+                # Handle standard input
                 junk = sys.stdin.readline()
                 running = 0
 
             else:
-                # handle all other sockets
+                # Handle all other sockets
                 request = getRequest(s)
 
-                # user sent log in information
+                # User sent log in information
                 if request == LOGIN:
-                    accountInfo = getAccountInfo(s)
-                    print accountInfo
-                    status = False
-                    for user in listOfAccounts:
-                        status = user.verifyAccount(accountInfo)
-                        if status:
-                            user.setSocket(s)
-                            onlineUsers[s] = user
-                            break
+                    handleLogin(s, listOfAccounts)
 
-                    for u in onlineUsers:
-                        print u
-                        print onlineUsers[u].getName()
-                    print status
-                    if status:
-                        s.send(OK)
-                    else:
-                        s.send(FAIL)
-
-                # user requested to check who are online
+                # User requested to check who are online
                 elif request == CHECKSTATUS:
-                    print "Check online users..."
-                    
-                    onlineUserList = []
-                    
-                    for u in onlineUsers:
-                        print onlineUsers[u].getName()
-                        onlineUserList.append(onlineUsers[u].getName())
-                        
-                    serializedOnlineList = cPickle.dumps(onlineUserList)
-                    serializedOnlineListSize = str(len(serializedOnlineList))
-                    
-                    header = prepareHeader(serializedOnlineListSize)
-                    
-                    sendAll(s, CHECKSTATUS + header + serializedOnlineList)
+                    handleCheckOnlineUsers(s)
 
                 # User sent messages to other members
                 elif request == CHAT:
-                    
-                    print onlineUsers[s].getName() + " sent: ",
-                    getMessageSizeBuff = recvAll(s, 10)
-                    getMessageSize = int(getMessageSizeBuff)
-
-                    # Get message
-                    getMessage = recvAll(s, getMessageSize)
-                    print getMessage
-                    broadcastMessage(s, getMessage)
+                    handelChatMessages(s)
 
                 # User sent invitation to online users to chat
                 elif request == INVITE:
-
-                    # Add user to chatMemberList
-                    if not s in chatMemberList:
-                        chatMemberList.append(s)
-                        
-                    print "User invites online users:"
-                    dataSizeBuff = recvAll(s, 10)
-                    dataSize = int(dataSizeBuff)
-
-                    # Get list of names
-                    listOfNames = recvAll(s, dataSize)
+                    handelInvitation(s)
                     
-                    Names = []
-                    if len(listOfNames) > 0:
-                        Names = listOfNames.split(',')
-
-                    for name in Names:
-                        # check name with online users
-                        for u in onlineUsers:
-                            if onlineUsers[u].getName() == name.strip():
-                                if not u in chatMemberList:
-                                    chatMemberList.append(u)
-                                break                  
-
-                    # print out list of chat members
-                    print "\nList of chat members:"
-                    for m in chatMemberList:
-                        print onlineUsers[m].getName()
-
-                # user's socket is closed
+                # User's socket is closed
                 else:
                     s.close()
                     input.remove(s)
-                    if s in onlineUsers:
-                        del onlineUsers[s]
                     if s in chatMemberList:
                         chatMemberList.remove(s)
+                        notifyOfflineMember(onlineUsers[s].getName())
+                    if s in onlineUsers:
+                        del onlineUsers[s]
 
     # Close server socket
     welcomeSock.close() 
