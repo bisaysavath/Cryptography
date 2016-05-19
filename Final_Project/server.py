@@ -1,4 +1,3 @@
-
 import socket
 import re
 import commands
@@ -29,7 +28,7 @@ class User:
         self.__name = name
         self.__password = password
         self.sock = sock
-        
+
     def getName(self):
         return self.__name
 
@@ -46,7 +45,7 @@ class User:
             else:
                 return False
 
-            
+
     def setSocket(self, sock):
         self.sock = sock
 
@@ -116,7 +115,7 @@ def prepareHeader(header):
 # Function to add header to data
 # ************************************************
 def preparePacket(data):
-    
+
     dataSize = str(len(data))
     header = prepareHeader(dataSize)
     return header + data
@@ -191,7 +190,7 @@ def handleLogin(sock, listOfAccounts):
             user.setSocket(sock)
             onlineUsers[sock] = user
             break
-        
+
     if status:
         print "Successfully logged in"
         sock.send(OK)
@@ -205,14 +204,14 @@ def handleLogin(sock, listOfAccounts):
 # ****************************************************
 def handleCheckOnlineUsers(sock):
     print "Check online users..."
-                    
+
     onlineUserList = []
-                    
+
     for u in onlineUsers:
         print onlineUsers[u].getName()
         onlineUserList.append(onlineUsers[u].getName())
-                        
-    serializedOnlineList = cPickle.dumps(onlineUserList)                    
+
+    serializedOnlineList = cPickle.dumps(onlineUserList)
     sendAll(sock, CHECKSTATUS + preparePacket(serializedOnlineList))
 
 # ****************************************************
@@ -239,13 +238,13 @@ def handelInvitation(sock):
      # Add user to chatMemberList
     if not sock in chatMemberList:
         chatMemberList.append(sock)
-                        
+
     dataSizeBuff = recvAll(sock, 10)
     dataSize = int(dataSizeBuff)
 
     # Get list of names
     listOfNames = recvAll(sock, dataSize)
-                    
+
     Names = []
     if len(listOfNames) > 0:
         Names = listOfNames.split(',')
@@ -272,19 +271,25 @@ def handelInvitation(sock):
             else:
                 message = "{0} is alreay in the chat session".format(onlineUsers[u].getName())
                 print message
-                sendAll(sock, INVITE +  preparePacket(message))             
+                sendAll(sock, INVITE +  preparePacket(message))
         else:
-           message = name + " is not online"
-           sendAll(sock, INVITE +  preparePacket(message))
+            message = name + " is not registered"
+            
+            for user in listOfAccounts:
+                if user.getName() == name:
+                    message = name + " is not online"
+                    break
+
+            sendAll(sock, INVITE +  preparePacket(message))
 
         found = False
-                          
+
 
     # Print out list of chat members
     print "\nList of chat members:"
     for m in chatMemberList:
         print onlineUsers[m].getName()
-        
+
 # ****************************************************
 # Main of the server
 # ****************************************************
@@ -295,16 +300,16 @@ if __name__ == "__main__":
     listOfAccounts.append(User("Duy", "abc", 0))
     listOfAccounts.append(User("Billy", "123", 0))
     listOfAccounts.append(User("Holy", "456", 0))
-    
+
     #if len(sys.argv) != 2:
     #    print "Usage: python server.py <PORT NUMBER>"
     #    exit(-1)
-    
+
     # The port on which to listen
     #if not sys.argv[1].isdigit():
     #    print "Port number is not valid"
     #    exit(-2)
-    
+
     #listenPort = int(sys.argv[1])
 
     listenPort = 1234
@@ -320,13 +325,13 @@ if __name__ == "__main__":
     print "Server is listening at port: " + str(listenPort)
 
     input = [welcomeSock, sys.stdin]
-    
+
     running = 1
     # *************************************************
     #           MAIN LOOP
     # *************************************************
     while running:
-    
+
         inputready,outputready,exceptready = select.select(input,[],[])
 
         for s in inputready:
@@ -360,7 +365,7 @@ if __name__ == "__main__":
                 # User sent invitation to online users to chat
                 elif request == INVITE:
                     handelInvitation(s)
-                    
+
                 # User's socket is closed
                 else:
                     s.close()
@@ -372,4 +377,4 @@ if __name__ == "__main__":
                         del onlineUsers[s]
 
     # Close server socket
-    welcomeSock.close() 
+    welcomeSock.close()
