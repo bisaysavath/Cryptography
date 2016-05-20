@@ -81,6 +81,9 @@ def prepareHeader(header):
     # Prepend '0' to make header 10 bytes
     while len(header) < 10:
         header = "0" + header
+    
+    # Encrypt header data
+    header = rsa.encrypt(header, SERVER_PUBLIC_KEY)
 
     return header
     
@@ -101,7 +104,7 @@ def userLogIn():
         # Encrypt request
         request = rsa.encrypt(LOGIN, SERVER_PUBLIC_KEY)
 
-        sendAll(clientSock, request  + header + accountInfo)
+        sendAll(clientSock, request  + preparePacket(accountInfo))
 
         if clientSock.recv(2) == OK:
             print "Welcome back, " + username + "!"

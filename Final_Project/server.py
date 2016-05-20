@@ -144,7 +144,9 @@ def getRequest(sock):
 
     # The request command is the first 64 bytes of the data
     request = recvAll(sock, 64)
-    request = rsa.decrypt(request, SERVER_PRIVATE_KEY)
+
+    if request != 0:
+        request = rsa.decrypt(request, SERVER_PRIVATE_KEY)
 
     return str(request)
 
@@ -156,7 +158,11 @@ def getRequest(sock):
 def getAccountInfo(sock):
 
     # Get fileNameSize
-    accountSizeBuff = recvAll(sock, 10)
+    accountSizeBuff = recvAll(sock, 64)
+    
+    # Decrypt header data
+    accountSizeBuff = rsa.decrypt(accountSizeBuff, SERVER_PRIVATE_KEY)
+    
     accountSize = int(accountSizeBuff)
 
     # Get fileName
@@ -169,7 +175,11 @@ def getAccountInfo(sock):
 # @message - the message to be sent to all members
 # *************************************************
 def broadcastMessage(sock):
-    getMessageSizeBuff = recvAll(sock, 10)
+    getMessageSizeBuff = recvAll(sock, 64)
+    
+    # Decrypt header data
+    getMessageSizeBuff = rsa.decrypt(getMessageSizeBuff, SERVER_PRIVATE_KEY)
+
     getMessageSize = int(getMessageSizeBuff)
     getMessage = recvAll(sock, getMessageSize)
     print "User sent: "
@@ -248,7 +258,11 @@ def handelInvitation(sock):
     if not sock in chatMemberList:
         chatMemberList.append(sock)
 
-    dataSizeBuff = recvAll(sock, 10)
+    dataSizeBuff = recvAll(sock, 64)
+    
+    # Decrypt header data
+    dataSizeBuff = rsa.decrypt(dataSizeBuff, SERVER_PRIVATE_KEY)
+    
     dataSize = int(dataSizeBuff)
 
     # Get list of names
