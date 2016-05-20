@@ -98,7 +98,10 @@ def userLogIn():
 
         header = prepareHeader(accountInfoSize)
 
-        sendAll(clientSock, LOGIN + header + accountInfo)
+        # Encrypt request
+        request = rsa.encrypt(LOGIN, SERVER_PUBLIC_KEY)
+
+        sendAll(clientSock, request  + header + accountInfo)
 
         if clientSock.recv(2) == OK:
             print "Welcome back, " + username + "!"
@@ -195,7 +198,9 @@ def process(sock, username):
 
                 # User wants to check who are online
                 elif msg == "::online":
-                    sendAll(sock, CHECKSTATUS)
+                    # Esncrypt request
+                    request = rsa.encrypt(CHECKSTATUS, SERVER_PUBLIC_KEY)
+                    sendAll(sock, request)
 
                 # User wants to invite online users to chat
                 elif msg.startswith('::invite'):
@@ -206,7 +211,8 @@ def process(sock, username):
                     else:
                         names = matchObj.group(1)
                         if len(names) > 0:
-                            sendAll(sock, INVITE + preparePacket(names))
+                            request = rsa.encrypt(INVITE, SERVER_PUBLIC_KEY)
+                            sendAll(sock, request + preparePacket(names))
                         
                 # Other messages
                 else:
@@ -215,7 +221,8 @@ def process(sock, username):
                     msg = username + ": " + msg
                     
                     if message:
-                        sendAll(sock, CHAT + preparePacket(msg))
+                        request = rsa.encrypt(CHAT, SERVER_PUBLIC_KEY)
+                        sendAll(sock, request + preparePacket(msg))
 
 
 # ************************************************

@@ -142,10 +142,10 @@ def preparePacket(data):
 # *************************************************
 def getRequest(sock):
 
-    # The request command is the first 2 bytes of the data
-    request = recvAll(sock, 2)
-    
-    print request
+    # The request command is the first 64 bytes of the data
+    request = recvAll(sock, 64)
+    request = rsa.decrypt(request, SERVER_PRIVATE_KEY)
+
     return str(request)
 
 # ************************************************
