@@ -122,21 +122,28 @@ def sendAll(sock, fileData):
 # ************************************************
 # Create a header with 10 bytes
 # *************************************************
-def prepareHeader(header):
+def prepareHeader(header, userKey):
 
     # Prepend '0' to make header 10 bytes
     while len(header) < 10:
         header = "0" + header
+        
+    # Encrypt header data with a user public key
+    header = rsa.encrypt(header, userKey)
 
     return header
 
 # ************************************************
 # Function to add header to data
 # ************************************************
-def preparePacket(data):
+def preparePacket(data, userKey):
+
+    # Encrypt data
+    data = rsa.encrypt(data, userKey)
 
     dataSize = str(len(data))
-    header = prepareHeader(dataSize)
+    header = prepareHeader(dataSize, userKey)
+    
     return header + data
 
 # ************************************************
@@ -171,6 +178,10 @@ def getAccountInfo(sock):
 
     # Get fileName
     accountInfo = recvAll(sock, accountSize)
+    
+    # Decrypt userdata
+    accountInfo = rsa.decrypt(accountInfo, SERVER_PRIVATE_KEY)
+    
     return accountInfo
 
 # ************************************************
@@ -193,12 +204,11 @@ def broadcastMessage(sock):
         # Send the message only to peers
         if m != sock :
             try :
-                header = prepareHeader(getMessageSizeBuff)
                 
                 # Encrypt a request
                 request = rsa.encrypt(CHAT, onlineUsers[m].getPubKey())
                 
-                sendAll(m, request + header + getMessage)
+                sendAll(m, request + preparePacket(getMessage))
             except :
                 # Broken socket connection
                 m.close()
@@ -225,13 +235,13 @@ def notifyOfflineMember(name):
 # @param listOfAccounts: all valid accounts on the system
 # ****************************************************
 def handleLogin(sock, listOfAccounts):
-    accountInfo = getAccountInfo(sock)
     status = False
+    userAccount = getAccountInfo(sock);
     userKey = ""
     print "User at socket {0} is trying to log in".format(sock)
     for user in listOfAccounts:
         userKey = user.getPubKey()
-        status = user.verifyAccount(accountInfo)
+        status = user.verifyAccount(userAccount)
         if status:
             user.setSocket(sock)
             onlineUsers[sock] = user
@@ -270,7 +280,22 @@ def handleCheckOnlineUsers(sock):
     # Encrypt a request
     request = rsa.encrypt(CHECKSTATUS, userPubKey)
     
-    sendAll(sock, request + preparePacket(serializedOnlineList))
+    sendAll(sock, request + preparePacket(serializedOnlineList, userPubKey))
+    
+def recvRSAPacket(sock):
+    
+    # Recieve header info
+    dataSizeBuff = recvAll(sock, 64)
+    
+    # Decrypt header and get its size
+    dataSizeBuff = rsa.decrypt(dataSizeBuff, SERVER_PRIVATE_KEY)
+    dataSize = int(dataSizeBuff)
+    
+    # Recieve data and decrypt
+    data = recvAll(sock, dataSize)
+    data = rsa.decrypt(data, SERVER_PRIVATE_KEY)
+    
+    return data
 
 # ****************************************************
 # Handle chat invitaion
@@ -281,15 +306,7 @@ def handelInvitation(sock):
     if not sock in chatMemberList:
         chatMemberList.append(sock)
 
-    dataSizeBuff = recvAll(sock, 64)
-    
-    # Decrypt header data
-    dataSizeBuff = rsa.decrypt(dataSizeBuff, SERVER_PRIVATE_KEY)
-    
-    dataSize = int(dataSizeBuff)
-
-    # Get list of names
-    listOfNames = recvAll(sock, dataSize)
+    listOfNames = recvRSAPacket(sock)
 
     Names = []
     if len(listOfNames) > 0:
@@ -319,18 +336,18 @@ def handelInvitation(sock):
             if not u in chatMemberList:
                 message = "{0} is added to the chat session".format(onlineUsers[u].getName())
                 chatMemberList.append(u)
-                sendAll(sock, request1 +  preparePacket(message))
+                sendAll(sock, request1 +  preparePacket(message, userPubKey))
 
                 # Notify user that is added to session
                 inviteUserPubKey = onlineUsers[u].getPubKey()
                     
                 request2 = rsa.encrypt(INVITE, inviteUserPubKey)
                     
-                sendAll(u, request2 + preparePacket("{0} invited you to the chat session".format(onlineUsers[sock].getName())))
+                sendAll(u, request2 + preparePacket("{0} invited you to the chat session".format(onlineUsers[sock].getName()), inviteUserPubKey))
             else:
                 message = "{0} is alreay in the chat session".format(onlineUsers[u].getName())
                 print message
-                sendAll(sock, request1 +  preparePacket(message))
+                sendAll(sock, request1 +  preparePacket(message, userPubKey))
         else:
             message = name + " is not registered"
             
@@ -339,8 +356,8 @@ def handelInvitation(sock):
                     message = name + " is not online"
                     
                     break
-
-            sendAll(sock, request1 +  preparePacket(message))
+            
+            sendAll(sock, request1 +  preparePacket(message, userPubKey))
 
         found = False
 
@@ -434,7 +451,9 @@ if __name__ == "__main__":
                     input.remove(s)
                     if s in chatMemberList:
                         chatMemberList.remove(s)
-                        notifyOfflineMember(onlineUsers[s].getName())
+                        username = onlineUsers[s].getName()
+                        notifyOfflineMember(username)
+                        print username + " logged out."
                     if s in onlineUsers:
                         del onlineUsers[s]
 

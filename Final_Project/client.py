@@ -86,7 +86,20 @@ def prepareHeader(header):
     header = rsa.encrypt(header, SERVER_PUBLIC_KEY)
 
     return header
+
+# ************************************************
+# Function to add header to data
+# ************************************************
+def preparePacket(data):
     
+    # Encrypt data
+    data = rsa.encrypt(data, SERVER_PUBLIC_KEY)
+    
+    dataSize = str(len(data))
+    header = prepareHeader(dataSize)
+    return header + data
+
+
 # ************************************************
 # Handle log in
 # ************************************************
@@ -98,8 +111,6 @@ def userLogIn():
 
         accountInfo = str(username) + ";" + str(password)
         accountInfoSize = str(len(accountInfo))
-
-        header = prepareHeader(accountInfoSize)
 
         # Encrypt request
         request = rsa.encrypt(LOGIN, SERVER_PUBLIC_KEY)
@@ -126,15 +137,27 @@ def userLogIn():
                 return False, ""
             print ""
 
+def recvRSAPacket(sock):
+    
+    # Recieve header info
+    dataSizeBuff = recvAll(sock, 64)
+    
+    # Decrypt header and get its size
+    dataSizeBuff = rsa.decrypt(dataSizeBuff, USER_PRIVATE_KEY)
+    dataSize = int(dataSizeBuff)
+    
+    # Recieve data and decrypt
+    data = recvAll(sock, dataSize)
+    data = rsa.decrypt(data, USER_PRIVATE_KEY)
+    
+    return data
+
 # ************************************************
 # Handle checking online users
 # ************************************************
 def checkOnlineUser(clientSock):
     
-    dataSizeBuff = recvAll(clientSock, 10)
-    dataSize = int(dataSizeBuff)
-    
-    serializedOnlineList = recvAll(clientSock, dataSize)
+    serializedOnlineList = recvRSAPacket(clientSock)
     onlineUserList = cPickle.loads(serializedOnlineList)
     
     print "Online users:"
@@ -142,15 +165,6 @@ def checkOnlineUser(clientSock):
     for user in onlineUserList:
         print user
     print ""
-
-# ************************************************
-# Function to add header to data
-# ************************************************
-def preparePacket(data):
-    
-    dataSize = str(len(data))
-    header = prepareHeader(dataSize)
-    return header + data
 
 # ************************************************
 # Process after user successfully logged in
@@ -183,11 +197,12 @@ def process(sock, username):
 
                 # Server sent chat message from other users
                 if response == CHAT:
-                    dataSizeBuff = recvAll(s, 10)
-                    dataSize = int(dataSizeBuff)
-                    msg =  recvAll(s, dataSize)
+                    # dataSizeBuff = recvAll(s, 10)
+                    # dataSize = int(dataSizeBuff)
+                    # msg =  recvAll(s, dataSize)
 
-                    print msg + "\n"
+                    # print msg + "\n"
+                    print recvRSAPacket(s) + "\n"
 
                 # Server sent notification about offline user
                 if response == MEMBEROFFLINE:
@@ -195,11 +210,7 @@ def process(sock, username):
 
                 # Server responded to chat invitation
                 if response == INVITE:
-                    messageSizeBuff = recvAll(s, 10)
-                    messageSize = int(messageSizeBuff)
-
-                    # Print the message from server
-                    print recvAll(s, messageSize)
+                    print recvRSAPacket(s) + "\n"
 
             
             elif s == sys.stdin:
