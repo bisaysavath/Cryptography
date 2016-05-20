@@ -17,6 +17,8 @@ CHAT = "14"
 CHECKCHATMEM = "15"
 MEMBEROFFLINE = "16"
 
+USER_PUBLIC_KEY = ""
+
 # Load server private key
 with open("server_private_key.pem") as privatefile:
     keydata = privatefile.read()
@@ -60,9 +62,11 @@ class User:
             else:
                 return False
 
-
     def setSocket(self, sock):
         self.sock = sock
+        
+    def getSocket(self):
+        return self.sock
 
 # ************************************************
 # Receives the specified number of bytes
@@ -190,7 +194,11 @@ def broadcastMessage(sock):
         if m != sock :
             try :
                 header = prepareHeader(getMessageSizeBuff)
-                sendAll(m, CHAT + header + getMessage)
+                
+                # Encrypt a request
+                request = rsa.encrypt(CHAT, onlineUsers[m].getPubKey())
+                
+                sendAll(m, request + header + getMessage)
             except :
                 # Broken socket connection
                 m.close()
@@ -204,7 +212,9 @@ def notifyOfflineMember(name):
     for m in chatMemberList:
         # Send notify to peers
         try:
-            m.send(MEMBEROFFLINE + name + " is offline")
+            # Encrypt a request
+            request = rsa.encrypt(MEMBEROFFLINE, onlineUsers[m].getPubKey())
+            m.send(request + name + " is offline")
         except:
             # Broken socket connection
             m.close()
@@ -217,21 +227,26 @@ def notifyOfflineMember(name):
 def handleLogin(sock, listOfAccounts):
     accountInfo = getAccountInfo(sock)
     status = False
+    userKey = ""
     print "User at socket {0} is trying to log in".format(sock)
     for user in listOfAccounts:
-        key = user.getPubKey()
+        userKey = user.getPubKey()
         status = user.verifyAccount(accountInfo)
         if status:
             user.setSocket(sock)
             onlineUsers[sock] = user
             break
+            
+    returnStatus = FAIL
 
     if status:
         print "Successfully logged in"
-        sock.send(OK)
+        returnStatus = OK
     else:
         print "Failed to log in"
-        sock.send(FAIL)
+        
+    returnStatus = rsa.encrypt(returnStatus, userKey)
+    sock.send(returnStatus)
 
 # ****************************************************
 # Handle user's request to check all online users
@@ -241,13 +256,21 @@ def handleCheckOnlineUsers(sock):
     print "Check online users..."
 
     onlineUserList = []
-
+    userPubKey = ""
+    
     for u in onlineUsers:
         print onlineUsers[u].getName()
         onlineUserList.append(onlineUsers[u].getName())
+        
+        if onlineUsers[u].getSocket() == sock:
+            userPubKey = onlineUsers[u].getPubKey()
 
     serializedOnlineList = cPickle.dumps(onlineUserList)
-    sendAll(sock, CHECKSTATUS + preparePacket(serializedOnlineList))
+    
+    # Encrypt a request
+    request = rsa.encrypt(CHECKSTATUS, userPubKey)
+    
+    sendAll(sock, request + preparePacket(serializedOnlineList))
 
 # ****************************************************
 # Handle chat invitaion
@@ -276,34 +299,48 @@ def handelInvitation(sock):
     message = ""
     for name in Names:
         print "User invites {0} to join chat session".format(name)
+        userPubKey = ""
+        
         # Check name with online users
         for u in onlineUsers:
             if onlineUsers[u].getName() == name.strip():
                 found = True
                 break
 
+        for user in listOfAccounts:
+            if user.getSocket() == sock:
+                userPubKey = user.getPubKey()
+                break
+
+        request1 = rsa.encrypt(INVITE, userPubKey)
+
         # Found the user
         if found:
             if not u in chatMemberList:
                 message = "{0} is added to the chat session".format(onlineUsers[u].getName())
                 chatMemberList.append(u)
-                sendAll(sock, INVITE +  preparePacket(message))
+                sendAll(sock, request1 +  preparePacket(message))
 
                 # Notify user that is added to session
-                sendAll(u, INVITE + preparePacket("{0} invited you to the chat session".format(onlineUsers[sock].getName())))
+                inviteUserPubKey = onlineUsers[u].getPubKey()
+                    
+                request2 = rsa.encrypt(INVITE, inviteUserPubKey)
+                    
+                sendAll(u, request2 + preparePacket("{0} invited you to the chat session".format(onlineUsers[sock].getName())))
             else:
                 message = "{0} is alreay in the chat session".format(onlineUsers[u].getName())
                 print message
-                sendAll(sock, INVITE +  preparePacket(message))
+                sendAll(sock, request1 +  preparePacket(message))
         else:
             message = name + " is not registered"
             
             for user in listOfAccounts:
                 if user.getName() == name:
                     message = name + " is not online"
+                    
                     break
 
-            sendAll(sock, INVITE +  preparePacket(message))
+            sendAll(sock, request1 +  preparePacket(message))
 
         found = False
 

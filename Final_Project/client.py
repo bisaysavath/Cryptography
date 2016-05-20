@@ -106,7 +106,17 @@ def userLogIn():
 
         sendAll(clientSock, request  + preparePacket(accountInfo))
 
-        if clientSock.recv(2) == OK:
+        returnStatus = clientSock.recv(64)
+
+        global USER_PRIVATE_KEY
+        USER_PRIVATE_KEY = setUserPrivateRSAKeys(username)
+
+        if (USER_PRIVATE_KEY != ""):
+            returnStatus = rsa.decrypt(returnStatus, USER_PRIVATE_KEY)
+        else:
+            returnStatus == FAIL
+
+        if returnStatus == OK:
             print "Welcome back, " + username + "!"
             print ""
             return True, username
@@ -163,7 +173,9 @@ def process(sock, username):
             if s == sock:
                 # Receive data from the server
                 # get the reponse code
-                response = s.recv(2)
+                response = s.recv(64)
+                
+                response = rsa.decrypt(response, USER_PRIVATE_KEY)
 
                 # Server sent the list of online users
                 if response == CHECKSTATUS:
@@ -243,8 +255,11 @@ def directionMenu():
     print "\n"
 
 def setUserPrivateRSAKeys(username):
-    with open(username + "_private_key.pem") as privatefile:
-        keydata = privatefile.read()
+    try:
+        with open(username + "_private_key.pem") as privatefile:
+            keydata = privatefile.read()
+    except:
+        return ""
 
     return rsa.PrivateKey.load_pkcs1(keydata,'PEM')
 
@@ -273,8 +288,6 @@ if __name__ == "__main__":
     if successSignIn:
         print "Successfully logged in"
         directionMenu()
-        setUserPrivateRSAKeys(username)
-        USER_PRIVATE_KEY = setUserPrivateRSAKeys(username)
         process(clientSock, username)
     else:
         print "Bye!"
