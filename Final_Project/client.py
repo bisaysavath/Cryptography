@@ -6,9 +6,10 @@ import getpass
 import cPickle
 import select
 import re
+import rsa
 
-FAIL = "0"
-OK = "1"
+FAIL = "00"
+OK = "01"
 
 LOGIN = "11"
 CHECKSTATUS = "12"
@@ -17,6 +18,12 @@ CHAT = "14"
 CHECKCHATMEM = "15"
 MEMBEROFFLINE = "16"
 
+USER_PRIVATE_KEY = ""
+with open("server_public_key.pem") as publicfile:
+    pkeydata = publicfile.read()
+    
+SERVER_PUBLIC_KEY = rsa.PublicKey.load_pkcs1(pkeydata)
+
 # ************************************************
 # Receives the specified number of bytes
 # from the specified socket
@@ -24,7 +31,6 @@ MEMBEROFFLINE = "16"
 # @param numBytes - the number of bytes to receive
 # @return - the bytes received
 # *************************************************
-
 def recvAll(sock, numBytes):
 
     # The buffer
@@ -55,7 +61,6 @@ def recvAll(sock, numBytes):
 # @return - Total bytes sent
 # *************************************************
 def sendAll(sock, fileData):
-
     # The number of bytes sent
     totalSent = 0
 
@@ -98,11 +103,11 @@ def userLogIn():
         if clientSock.recv(2) == OK:
             print "Welcome back, " + username + "!"
             print ""
-            return True
+            return True, username
         else:
             userChoice = raw_input("Wrong credentials. Try again? (y/n) ")
             if userChoice.lower() == "n":
-                return False
+                return False, ""
             print ""
 
 # ************************************************
@@ -133,8 +138,9 @@ def preparePacket(data):
 
 # ************************************************
 # Process after user successfully logged in
+# @param sock: socket used to connect to a server
 # *************************************************
-def process(sock):
+def process(sock, username):
 
     input = [sock, sys.stdin]
     
@@ -159,7 +165,11 @@ def process(sock):
 
                 # Server sent chat message from other users
                 if response == CHAT:
-                    print s.recv(100) + "\n"
+                    dataSizeBuff = recvAll(s, 10)
+                    dataSize = int(dataSizeBuff)
+                    msg =  recvAll(s, dataSize)
+
+                    print msg + "\n"
 
                 # Server sent notification about offline user
                 if response == MEMBEROFFLINE:
@@ -201,6 +211,9 @@ def process(sock):
                 # Other messages
                 else:
                     message = msg.strip()
+
+                    msg = username + ": " + msg
+                    
                     if message:
                         sendAll(sock, CHAT + preparePacket(msg))
 
@@ -218,7 +231,12 @@ def directionMenu():
     print "***** Otherwise, any input message will be chat message              *****"
     print "**************************************************************************"
     print "\n"
-    
+
+def setUserPrivateRSAKeys(username):
+    with open(username + "_private_key.pem") as privatefile:
+        keydata = privatefile.read()
+
+    return rsa.PrivateKey.load_pkcs1(keydata,'PEM')
 
 if __name__ == "__main__":
 
@@ -240,10 +258,14 @@ if __name__ == "__main__":
     print "*********************************"
     print ""
 
-    if userLogIn():
+    successSignIn, username = userLogIn()
+
+    if successSignIn:
         print "Successfully logged in"
         directionMenu()
-        process(clientSock)
+        setUserPrivateRSAKeys(username)
+        USER_PRIVATE_KEY = setUserPrivateRSAKeys(username)
+        process(clientSock, username)
     else:
         print "Bye!"
 

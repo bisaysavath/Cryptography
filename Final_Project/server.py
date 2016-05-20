@@ -5,9 +5,10 @@ import os
 import sys
 import select
 import cPickle
+import rsa
 
-FAIL = "0"
-OK = "1"
+FAIL = "00"
+OK = "01"
 
 LOGIN = "11"
 CHECKSTATUS = "12"
@@ -15,6 +16,12 @@ INVITE = "13"
 CHAT = "14"
 CHECKCHATMEM = "15"
 MEMBEROFFLINE = "16"
+
+# Load server private key
+with open("server_private_key.pem") as privatefile:
+    keydata = privatefile.read()
+    
+SERVER_PRIVATE_KEY = rsa.PrivateKey.load_pkcs1(keydata,'PEM')
 
 # List of online users
 onlineUsers = {}
@@ -28,6 +35,14 @@ class User:
         self.__name = name
         self.__password = password
         self.sock = sock
+        
+        with open(name + "_public_key.pem") as publicfile:
+            pkeydata = publicfile.read()
+            
+        self.__pubKey = rsa.PublicKey.load_pkcs1(pkeydata)
+    
+    def getPubKey(self):
+        return self.__pubKey
 
     def getName(self):
         return self.__name
@@ -129,6 +144,8 @@ def getRequest(sock):
 
     # The request command is the first 2 bytes of the data
     request = recvAll(sock, 2)
+    
+    print request
     return str(request)
 
 # ************************************************
@@ -151,12 +168,19 @@ def getAccountInfo(sock):
 # @param sock - the socket which sent the message
 # @message - the message to be sent to all members
 # *************************************************
-def broadcastMessage(sock, message):
+def broadcastMessage(sock):
+    getMessageSizeBuff = recvAll(sock, 10)
+    getMessageSize = int(getMessageSizeBuff)
+    getMessage = recvAll(sock, getMessageSize)
+    print "User sent: "
+    print getMessage
+    
     for m in chatMemberList:
         # Send the message only to peers
         if m != sock :
             try :
-                m.send(CHAT + onlineUsers[sock].getName() + ": " + message)
+                header = prepareHeader(getMessageSizeBuff)
+                sendAll(m, CHAT + header + getMessage)
             except :
                 # Broken socket connection
                 m.close()
@@ -185,6 +209,7 @@ def handleLogin(sock, listOfAccounts):
     status = False
     print "User at socket {0} is trying to log in".format(sock)
     for user in listOfAccounts:
+        key = user.getPubKey()
         status = user.verifyAccount(accountInfo)
         if status:
             user.setSocket(sock)
@@ -213,22 +238,6 @@ def handleCheckOnlineUsers(sock):
 
     serializedOnlineList = cPickle.dumps(onlineUserList)
     sendAll(sock, CHECKSTATUS + preparePacket(serializedOnlineList))
-
-# ****************************************************
-# Handle chat messages sent from an user
-# @param sock: user's socket
-# ****************************************************
-def handelChatMessages(sock):
-    print onlineUsers[sock].getName() + " sent: ",
-    getMessageSizeBuff = recvAll(sock, 10)
-    getMessageSize = int(getMessageSizeBuff)
-
-    # Get the message
-    getMessage = recvAll(sock, getMessageSize)
-    print getMessage
-
-    # Send the message to everyone in the chat session
-    broadcastMessage(sock, getMessage)
 
 # ****************************************************
 # Handle chat invitaion
@@ -298,8 +307,9 @@ if __name__ == "__main__":
     # Create some accounts
     listOfAccounts = []
     listOfAccounts.append(User("Duy", "abc", 0))
-    listOfAccounts.append(User("Billy", "123", 0))
-    listOfAccounts.append(User("Holy", "456", 0))
+    listOfAccounts.append(User("Tevin", "abc", 0))
+    listOfAccounts.append(User("Billy", "abc", 0))
+    listOfAccounts.append(User("Holly", "abc", 0))
 
     #if len(sys.argv) != 2:
     #    print "Usage: python server.py <PORT NUMBER>"
@@ -360,7 +370,7 @@ if __name__ == "__main__":
 
                 # User sent messages to other members
                 elif request == CHAT:
-                    handelChatMessages(s)
+                    broadcastMessage(s)
 
                 # User sent invitation to online users to chat
                 elif request == INVITE:
@@ -368,6 +378,7 @@ if __name__ == "__main__":
 
                 # User's socket is closed
                 else:
+                    print "Socket closed"
                     s.close()
                     input.remove(s)
                     if s in chatMemberList:
