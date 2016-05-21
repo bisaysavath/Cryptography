@@ -7,13 +7,12 @@ import select
 import cPickle
 import rsa
 from Crypto.Cipher import ARC4
-#from Crypto.Hash import SHA
-#from Crypto import Random
 
 MAXIMUM_CHAT_MESSAGE_LEN = 1000
+
+# Status Codes
 FAIL = "00"
 OK = "01"
-
 LOGIN = "11"
 CHECKSTATUS = "12"
 INVITE = "13"
@@ -36,13 +35,8 @@ onlineUsers = {}
 # List of chat members
 chatMemberList = []
 
-# Random Key
+# Random symmetric key used for chatting
 randomKey = ""
-def generateRandomKey():
-
-    # Generate a random key with size of 32 bytes
-    key = os.urandom(32)
-    return key
     
 class User:
 
@@ -289,7 +283,30 @@ def handleCheckOnlineUsers(sock):
     request = rsa.encrypt(CHECKSTATUS, userPubKey)
     
     sendAll(sock, request + preparePacket(serializedOnlineList, userPubKey))
+
+# ****************************************************
+# Handle user's request to check chat members
+# @param sock: user's socket
+# ****************************************************
+def handleCheckChatMembers(sock):
+    print "Check chat members..."
+
+    chatList = []
+    for m in chatMemberList:
+        chatList.append(onlineUsers[m].getName())
+
+    serializedChatList = cPickle.dumps(chatList)
+
+    userPubKey = onlineUsers[sock].getPubKey()
     
+    request = rsa.encrypt(CHECKCHATMEM, userPubKey)
+    sendAll(sock, request +  preparePacket(serializedChatList, userPubKey))
+        
+
+# ****************************************************
+# Decrypt the data using server's private key
+# @param sock: user's socket
+# ****************************************************
 def recvRSAPacket(sock):
     
     # Recieve header info
@@ -309,16 +326,16 @@ def recvRSAPacket(sock):
 # Handle chat invitaion
 # @param sock: user's socket
 # ****************************************************
-def handelInvitation(sock):
+def handleInvitation(sock):
     
     # Add user to chatMemberList
     if not sock in chatMemberList:
         chatMemberList.append(sock)
 
-    # Generate the symmetric key to use for chatting
+    # Generate the symmetric key with size of 32 bytes (128 bits) to use for chatting
     if len(chatMemberList) == 1:
         global randomKey
-        randomKey = generateRandomKey()
+        randomKey = os.urandom(32)
 
     listOfNames = recvRSAPacket(sock)
 
@@ -452,8 +469,11 @@ if __name__ == "__main__":
 
                 # User sent invitation to online users to chat
                 elif request == INVITE:
-                    handelInvitation(s)
-
+                    handleInvitation(s)
+        
+                elif request == CHECKCHATMEM:
+                    handleCheckChatMembers(s)
+             
                 # User's socket is closed
                 else:
                     print "Socket closed"

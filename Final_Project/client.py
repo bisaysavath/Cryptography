@@ -11,9 +11,9 @@ from Crypto.Cipher import ARC4
 from Crypto.Cipher import AES
 import base64
 
+# Status Codes
 FAIL = "00"
 OK = "01"
-
 LOGIN = "11"
 CHECKSTATUS = "12"
 INVITE = "13"
@@ -177,7 +177,7 @@ def recvRSAPacket(sock):
 # ************************************************
 # Handle checking online users
 # ************************************************
-def checkOnlineUser(clientSock):
+def getOnlineUser(clientSock):
     
     serializedOnlineList = recvRSAPacket(clientSock)
     onlineUserList = cPickle.loads(serializedOnlineList)
@@ -188,6 +188,16 @@ def checkOnlineUser(clientSock):
         print user
     print ""
 
+def getChatMembers(clientSock):
+    serializedChatList = recvRSAPacket(clientSock)
+    chatList = cPickle.loads(serializedChatList)
+    
+    print "Chat members: "
+
+    for user in chatList:
+        print user
+    print ""
+    
 def getRandomKey(clientSock):
     global RANDOM_KEY
     key = recvRSAPacket(clientSock)
@@ -232,7 +242,7 @@ def process(sock, username):
 
                 # Server sent the list of online users
                 if response == CHECKSTATUS:
-                    checkOnlineUser(s)
+                    getOnlineUser(s)
 
                 # Server sent chat message from other users
                 if response == CHAT:
@@ -246,6 +256,10 @@ def process(sock, username):
                 if response == INVITE:
                     print recvRSAPacket(s) + "\n"
 
+                # Server responded to check chat members
+                if response == CHECKCHATMEM:
+                    getChatMembers(s)
+                    
                 # Server sent a random symmetric key to be used for chatting
                 if response == KEY:
                     getRandomKey(s)
@@ -276,6 +290,11 @@ def process(sock, username):
                         if len(names) > 0:
                             request = rsa.encrypt(INVITE, SERVER_PUBLIC_KEY)
                             sendAll(sock, request + preparePacket(names))
+
+                # User wants to check who are in the chat session
+                elif msg == "::chatmem":
+                    request = rsa.encrypt(CHECKCHATMEM, SERVER_PUBLIC_KEY)
+                    sendAll(sock, request)
                         
                 # Chat message
                 else:
@@ -296,6 +315,7 @@ def directionMenu():
     print "*****                INSTRUCTION                                     *****"
     print "***** Type ::online to check online users                            *****"
     print "***** Type ::invite name1,name2... to invite online users to chat    *****"
+    print "***** Type ::chatmem to check members in the chat session            *****"
     print "***** Type ::quit to quit the program                                *****"
     print "***** Otherwise, any input message will be chat message              *****"
     print "**************************************************************************"
