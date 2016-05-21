@@ -7,6 +7,7 @@ import cPickle
 import select
 import re
 import rsa
+from Crypto.Cipher import ARC4
 
 FAIL = "00"
 OK = "01"
@@ -17,12 +18,17 @@ INVITE = "13"
 CHAT = "14"
 CHECKCHATMEM = "15"
 MEMBEROFFLINE = "16"
+KEY = "17"
 
 USER_PRIVATE_KEY = ""
 with open("server_public_key.pem") as publicfile:
     pkeydata = publicfile.read()
     
 SERVER_PUBLIC_KEY = rsa.PublicKey.load_pkcs1(pkeydata)
+
+RANDOM_KEY = "abc"
+# Create an instance of the RC4 cipher class.
+Cipher = ARC4.new(RANDOM_KEY)
 
 # ************************************************
 # Receives the specified number of bytes
@@ -166,6 +172,24 @@ def checkOnlineUser(clientSock):
         print user
     print ""
 
+def getRandomKey(clientSock):
+    global RANDOM_KEY
+    key = recvRSAPacket(clientSock)
+    if key != RANDOM_KEY:
+        RANDOM_KEY = key
+        global Cipher
+        Cipher = ARC4.new(RANDOM_KEY)
+
+    print Cipher
+def decryptChatMessage(clientSock, size):
+
+    encryptedMessage = clientSock.recv(size)
+    print Cipher.decrypt(encryptedMessage)
+
+def encryptChatMessage(message):
+    encryptedMessage = Cipher.encrypt(message)
+    return encryptedMessage
+
 # ************************************************
 # Process after user successfully logged in
 # @param sock: socket used to connect to a server
@@ -199,10 +223,7 @@ def process(sock, username):
                 if response == CHAT:
                     dataSizeBuff = recvAll(s, 10)
                     dataSize = int(dataSizeBuff)
-                    msg =  recvAll(s, dataSize)
-
-                    print msg + "\n"
-                    # print recvRSAPacket(s) + "\n"
+                    decryptChatMessage(s, dataSize)
 
                 # Server sent notification about offline user
                 if response == MEMBEROFFLINE:
@@ -212,6 +233,9 @@ def process(sock, username):
                 if response == INVITE:
                     print recvRSAPacket(s) + "\n"
 
+                if response == KEY:
+                    getRandomKey(s)
+                    print RANDOM_KEY
             
             elif s == sys.stdin:
                 # Handle standard input
@@ -254,7 +278,7 @@ def process(sock, username):
                         while len(header) < 10:
                             header = "0" + header
                         
-                        sendAll(sock, request + header + msg)
+                        sendAll(sock, request + header + encryptChatMessage(msg))
 
 
 # ************************************************

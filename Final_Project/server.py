@@ -6,6 +6,10 @@ import sys
 import select
 import cPickle
 import rsa
+from Crypto.Cipher import ARC4
+#from Crypto.Hash import SHA
+#from Crypto import Random
+
 
 FAIL = "00"
 OK = "01"
@@ -16,6 +20,7 @@ INVITE = "13"
 CHAT = "14"
 CHECKCHATMEM = "15"
 MEMBEROFFLINE = "16"
+KEY = "17"
 
 USER_PUBLIC_KEY = ""
 
@@ -31,6 +36,14 @@ onlineUsers = {}
 # List of chat members
 chatMemberList = []
 
+# Random Key
+randomKey = ""
+def generateRandomKey():
+
+    # Generate a random key with size of 32 bytes
+    key = os.urandom(32)
+    return key
+    
 class User:
 
     def __init__(self, name, password, sock):
@@ -67,7 +80,7 @@ class User:
         
     def getSocket(self):
         return self.sock
-
+    
 # ************************************************
 # Receives the specified number of bytes
 # from the specified socket
@@ -303,10 +316,18 @@ def recvRSAPacket(sock):
 # @param sock: user's socket
 # ****************************************************
 def handelInvitation(sock):
-     # Add user to chatMemberList
+    
+    # Add user to chatMemberList
     if not sock in chatMemberList:
         chatMemberList.append(sock)
 
+    # Generate 
+    if len(chatMemberList) == 1:
+        global randomKey
+        randomKey = generateRandomKey()
+
+
+    print randomKey
     listOfNames = recvRSAPacket(sock)
 
     Names = []
@@ -331,24 +352,31 @@ def handelInvitation(sock):
                 break
 
         request1 = rsa.encrypt(INVITE, userPubKey)
+        request3 = rsa.encrypt(KEY, userPubKey)
 
         # Found the user
         if found:
             if not u in chatMemberList:
                 message = "{0} is added to the chat session".format(onlineUsers[u].getName())
                 chatMemberList.append(u)
-                sendAll(sock, request1 +  preparePacket(message, userPubKey))
+                sendAll(sock, request1 + preparePacket( message, userPubKey))
+                sendAll(sock, request3 + preparePacket(randomKey, userPubKey))
+                
 
                 # Notify user that is added to session
                 inviteUserPubKey = onlineUsers[u].getPubKey()
                     
                 request2 = rsa.encrypt(INVITE, inviteUserPubKey)
+                request4 = rsa.encrypt(KEY, inviteUserPubKey)
                     
                 sendAll(u, request2 + preparePacket("{0} invited you to the chat session".format(onlineUsers[sock].getName()), inviteUserPubKey))
+                sendAll(u, request4 + preparePacket(randomKey, inviteUserPubKey))
+                
             else:
-                message = "{0} is alreay in the chat session".format(onlineUsers[u].getName())
+                message = "{0} is already in the chat session".format(onlineUsers[u].getName())
                 print message
                 sendAll(sock, request1 +  preparePacket(message, userPubKey))
+                sendAll(sock, request3 + preparePacket(randomKey, userPubKey))
         else:
             message = name + " is not registered"
             
