@@ -197,12 +197,12 @@ def process(sock, username):
 
                 # Server sent chat message from other users
                 if response == CHAT:
-                    # dataSizeBuff = recvAll(s, 10)
-                    # dataSize = int(dataSizeBuff)
-                    # msg =  recvAll(s, dataSize)
+                    dataSizeBuff = recvAll(s, 10)
+                    dataSize = int(dataSizeBuff)
+                    msg =  recvAll(s, dataSize)
 
-                    # print msg + "\n"
-                    print recvRSAPacket(s) + "\n"
+                    print msg + "\n"
+                    # print recvRSAPacket(s) + "\n"
 
                 # Server sent notification about offline user
                 if response == MEMBEROFFLINE:
@@ -245,10 +245,16 @@ def process(sock, username):
                     message = msg.strip()
 
                     msg = username + ": " + msg
+                    header = str(len(msg))
                     
                     if message:
                         request = rsa.encrypt(CHAT, SERVER_PUBLIC_KEY)
-                        sendAll(sock, request + preparePacket(msg))
+                        
+                        # Prepend '0' to make header 10 bytes
+                        while len(header) < 10:
+                            header = "0" + header
+                        
+                        sendAll(sock, request + header + msg)
 
 
 # ************************************************

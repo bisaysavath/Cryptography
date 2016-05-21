@@ -190,13 +190,14 @@ def getAccountInfo(sock):
 # @message - the message to be sent to all members
 # *************************************************
 def broadcastMessage(sock):
-    getMessageSizeBuff = recvAll(sock, 64)
+    getMessageSizeBuff = recvAll(sock, 10)
     
     # Decrypt header data
-    getMessageSizeBuff = rsa.decrypt(getMessageSizeBuff, SERVER_PRIVATE_KEY)
+    # getMessageSizeBuff = rsa.decrypt(getMessageSizeBuff, SERVER_PRIVATE_KEY)
 
     getMessageSize = int(getMessageSizeBuff)
     getMessage = recvAll(sock, getMessageSize)
+    # getMessage = recvAll(sock, 100)
     print "User sent: "
     print getMessage
     
@@ -208,7 +209,7 @@ def broadcastMessage(sock):
                 # Encrypt a request
                 request = rsa.encrypt(CHAT, onlineUsers[m].getPubKey())
                 
-                sendAll(m, request + preparePacket(getMessage, onlineUsers[m].getPubKey()))
+                sendAll(m, request + getMessageSizeBuff + getMessage)
             except :
                 # Broken socket connection
                 m.close()
