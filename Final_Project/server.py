@@ -208,7 +208,7 @@ def broadcastMessage(sock):
                 # Encrypt a request
                 request = rsa.encrypt(CHAT, onlineUsers[m].getPubKey())
                 
-                sendAll(m, request + preparePacket(getMessage))
+                sendAll(m, request + preparePacket(getMessage, onlineUsers[m].getPubKey()))
             except :
                 # Broken socket connection
                 m.close()
