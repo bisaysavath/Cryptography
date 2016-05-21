@@ -10,7 +10,7 @@ from Crypto.Cipher import ARC4
 #from Crypto.Hash import SHA
 #from Crypto import Random
 
-
+MAXIMUM_CHAT_MESSAGE_LEN = 1000
 FAIL = "00"
 OK = "01"
 
@@ -203,14 +203,8 @@ def getAccountInfo(sock):
 # @message - the message to be sent to all members
 # *************************************************
 def broadcastMessage(sock):
-    getMessageSizeBuff = recvAll(sock, 10)
-    
-    # Decrypt header data
-    # getMessageSizeBuff = rsa.decrypt(getMessageSizeBuff, SERVER_PRIVATE_KEY)
 
-    getMessageSize = int(getMessageSizeBuff)
-    getMessage = recvAll(sock, getMessageSize)
-    # getMessage = recvAll(sock, 100)
+    getMessage = sock.recv(MAXIMUM_CHAT_MESSAGE_LEN)
     print "User sent: "
     print getMessage
     
@@ -222,7 +216,7 @@ def broadcastMessage(sock):
                 # Encrypt a request
                 request = rsa.encrypt(CHAT, onlineUsers[m].getPubKey())
                 
-                sendAll(m, request + getMessageSizeBuff + getMessage)
+                sendAll(m, request + getMessage)
             except :
                 # Broken socket connection
                 m.close()
@@ -321,13 +315,11 @@ def handelInvitation(sock):
     if not sock in chatMemberList:
         chatMemberList.append(sock)
 
-    # Generate 
+    # Generate the symmetric key to use for chatting
     if len(chatMemberList) == 1:
         global randomKey
         randomKey = generateRandomKey()
 
-
-    print randomKey
     listOfNames = recvRSAPacket(sock)
 
     Names = []
@@ -407,17 +399,6 @@ if __name__ == "__main__":
     listOfAccounts.append(User("Tevin", "abc", 0))
     listOfAccounts.append(User("Billy", "abc", 0))
     listOfAccounts.append(User("Holly", "abc", 0))
-
-    #if len(sys.argv) != 2:
-    #    print "Usage: python server.py <PORT NUMBER>"
-    #    exit(-1)
-
-    # The port on which to listen
-    #if not sys.argv[1].isdigit():
-    #    print "Port number is not valid"
-    #    exit(-2)
-
-    #listenPort = int(sys.argv[1])
 
     listenPort = 1234
 

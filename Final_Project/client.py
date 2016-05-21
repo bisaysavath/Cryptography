@@ -8,6 +8,8 @@ import select
 import re
 import rsa
 from Crypto.Cipher import ARC4
+from Crypto.Cipher import AES
+import base64
 
 FAIL = "00"
 OK = "01"
@@ -26,9 +28,23 @@ with open("server_public_key.pem") as publicfile:
     
 SERVER_PUBLIC_KEY = rsa.PublicKey.load_pkcs1(pkeydata)
 
-RANDOM_KEY = "abc"
+RANDOM_KEY = os.urandom(32)
 # Create an instance of the RC4 cipher class.
-Cipher = ARC4.new(RANDOM_KEY)
+Cipher = AES.new(RANDOM_KEY)
+
+# the block size for the cipher object; must be 16, 24, or 32 for AES
+BLOCK_SIZE = 32
+MAXIMUM_CHAT_MESSAGE_LEN = 1000
+
+PADDING = '{'
+
+# one-liner to sufficiently pad the text to be encrypted
+pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * PADDING
+
+# one-liners to encrypt/encode and decrypt/decode a string
+# encrypt with AES, encode with base64
+EncodeAES = lambda c, s: base64.b64encode(c.encrypt(pad(s)))
+DecodeAES = lambda c, e: c.decrypt(base64.b64decode(e)).rstrip(PADDING)
 
 # ************************************************
 # Receives the specified number of bytes
@@ -178,16 +194,15 @@ def getRandomKey(clientSock):
     if key != RANDOM_KEY:
         RANDOM_KEY = key
         global Cipher
-        Cipher = ARC4.new(RANDOM_KEY)
+        Cipher = AES.new(RANDOM_KEY)
 
-    print Cipher
-def decryptChatMessage(clientSock, size):
 
-    encryptedMessage = clientSock.recv(size)
-    print Cipher.decrypt(encryptedMessage)
+def decryptChatMessage(clientSock):
+    encryptedMessage = clientSock.recv(MAXIMUM_CHAT_MESSAGE_LEN)
+    return DecodeAES(Cipher, encryptedMessage)
 
 def encryptChatMessage(message):
-    encryptedMessage = Cipher.encrypt(message)
+    encryptedMessage = EncodeAES(Cipher, message)
     return encryptedMessage
 
 # ************************************************
@@ -221,9 +236,7 @@ def process(sock, username):
 
                 # Server sent chat message from other users
                 if response == CHAT:
-                    dataSizeBuff = recvAll(s, 10)
-                    dataSize = int(dataSizeBuff)
-                    decryptChatMessage(s, dataSize)
+                    print decryptChatMessage(s) + "\n"
 
                 # Server sent notification about offline user
                 if response == MEMBEROFFLINE:
@@ -233,9 +246,9 @@ def process(sock, username):
                 if response == INVITE:
                     print recvRSAPacket(s) + "\n"
 
+                # Server sent a random symmetric key to be used for chatting
                 if response == KEY:
                     getRandomKey(s)
-                    print RANDOM_KEY
             
             elif s == sys.stdin:
                 # Handle standard input
@@ -264,21 +277,14 @@ def process(sock, username):
                             request = rsa.encrypt(INVITE, SERVER_PUBLIC_KEY)
                             sendAll(sock, request + preparePacket(names))
                         
-                # Other messages
+                # Chat message
                 else:
                     message = msg.strip()
-
                     msg = username + ": " + msg
                     header = str(len(msg))
-                    
                     if message:
-                        request = rsa.encrypt(CHAT, SERVER_PUBLIC_KEY)
-                        
-                        # Prepend '0' to make header 10 bytes
-                        while len(header) < 10:
-                            header = "0" + header
-                        
-                        sendAll(sock, request + header + encryptChatMessage(msg))
+                        request = rsa.encrypt(CHAT, SERVER_PUBLIC_KEY)                        
+                        sendAll(sock, request + encryptChatMessage(msg))
 
 
 # ************************************************
