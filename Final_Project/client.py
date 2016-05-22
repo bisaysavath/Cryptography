@@ -205,7 +205,7 @@ def recvRSAPacket(sock):
 # @param username - username of a currently logged in user
 # @return - an RSA variable holding user's private key
 # *************************************************
- def setUserPrivateRSAKeys(username):
+def setUserPrivateRSAKeys(username):
     try:
         with open(username + "_private_key.pem") as privatefile:
             keydata = privatefile.read()
