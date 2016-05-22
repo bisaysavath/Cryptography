@@ -10,7 +10,9 @@ import rsa
 from Crypto.Cipher import AES
 import base64
 
+# ************************************************
 # Status Codes
+# ************************************************
 FAIL = "00"
 OK = "01"
 LOGIN = "11"
@@ -21,17 +23,26 @@ CHECKCHATMEM = "15"
 MEMBEROFFLINE = "16"
 KEY = "17"
 
+# ************************************************
+# Global variables
+# ************************************************
 USER_PRIVATE_KEY = ""
+
 with open("server_public_key.pem") as publicfile:
     pkeydata = publicfile.read()
-    
+
 SERVER_PUBLIC_KEY = rsa.PublicKey.load_pkcs1(pkeydata)
 
 RANDOM_KEY = os.urandom(32)
+
 # Create an instance of the RC4 cipher class.
 Cipher = AES.new(RANDOM_KEY)
 
-# the block size for the cipher object; must be 16, 24, or 32 for AES
+
+# ************************************************
+# Set up AES Algorithm
+# ************************************************
+# The block size for the cipher object; must be 16, 24, or 32 for AES
 BLOCK_SIZE = 32
 MAXIMUM_CHAT_MESSAGE_LEN = 1000
 
@@ -76,7 +87,7 @@ def recvAll(sock, numBytes):
     return recvBuff
 
 # ************************************************
-# Send data to the specified socket
+# Sends data to the specified socket
 # @param sock - the socket from which to send
 # @param fileData - the data will be sent
 # @return - Total bytes sent
@@ -95,7 +106,10 @@ def sendAll(sock, fileData):
     return totalSent
 
 # ************************************************
-# Create a header with 10 bytes
+# Creates a 10-byte ciphertext header for data
+# @param header - the string type representing
+# the size of data in decimal
+# @return - ciphertext header prepended with 0 to fill out 10 bytes
 # *************************************************
 def prepareHeader(header):
 
@@ -109,8 +123,11 @@ def prepareHeader(header):
     return header
 
 # ************************************************
-# Function to add header to data
-# ************************************************
+# Prepares the data to be sent into header and
+# encrypted data packet
+# @param data - data to be sent
+# @return - encrypted packet ready to be sent
+# *************************************************
 def preparePacket(data):
     
     # Encrypt data
@@ -120,10 +137,14 @@ def preparePacket(data):
     header = prepareHeader(dataSize)
     return header + data
 
-
 # ************************************************
-# Handle log in
-# ************************************************
+# Handles user login; Asks for username and password
+# Sets the user private key if the .pem file for that
+# user is found in a current directory
+# @param - none
+# @return1 - Boolean value of sign in status
+# @return2 - String of a username signed in
+# *************************************************
 def userLogIn():
 
     while (True):
@@ -131,7 +152,6 @@ def userLogIn():
         password = getpass.getpass("Password: ")
 
         accountInfo = str(username) + ";" + str(password)
-        accountInfoSize = str(len(accountInfo))
 
         # Encrypt request
         request = rsa.encrypt(LOGIN, SERVER_PUBLIC_KEY)
@@ -158,6 +178,11 @@ def userLogIn():
                 return False, ""
             print ""
 
+# ************************************************
+# Receives RSA packet and decrypt a data
+# @param sock - the socket from which to send
+# @return - an original data
+# *************************************************
 def recvRSAPacket(sock):
     
     # Recieve header info
@@ -174,8 +199,28 @@ def recvRSAPacket(sock):
     return data
 
 # ************************************************
-# Handle checking online users
+# Opens and reads in a user .pem file
+# If cannot find the .pem file, it will return an
+# empty string
+# @param username - username of a currently logged in user
+# @return - an RSA variable holding user's private key
+# *************************************************
+ def setUserPrivateRSAKeys(username):
+    try:
+        with open(username + "_private_key.pem") as privatefile:
+            keydata = privatefile.read()
+    except:
+        return ""
+
+    return rsa.PrivateKey.load_pkcs1(keydata,'PEM')
+
 # ************************************************
+# Handles ::online response. When server reponses
+# back with a list of online users. This deserializes
+# a packet and prints out a list
+# @param clientSock - the socket from which to receive
+# @return - none
+# *************************************************
 def getOnlineUser(clientSock):
     
     serializedOnlineList = recvRSAPacket(clientSock)
@@ -187,6 +232,13 @@ def getOnlineUser(clientSock):
         print user
     print ""
 
+# ************************************************
+# Handles ::chatmem response. When server reponses
+# back with a list of users who are in the chat session.
+# This deserializes a packet and prints out a list
+# @param clientSock - the socket from which to receive
+# @return - none
+# *************************************************
 def getChatMembers(clientSock):
     serializedChatList = recvRSAPacket(clientSock)
     chatList = cPickle.loads(serializedChatList)
@@ -196,7 +248,14 @@ def getChatMembers(clientSock):
     for user in chatList:
         print user
     print ""
-    
+
+# ************************************************
+# Receives a session key from a server and sets
+# the RANDOM_KEY global variable to store that
+# session key
+# @param clientSock - the socket from which to receive
+# @return - none
+# *************************************************
 def getRandomKey(clientSock):
     global RANDOM_KEY
     key = recvRSAPacket(clientSock)
@@ -205,18 +264,29 @@ def getRandomKey(clientSock):
         global Cipher
         Cipher = AES.new(RANDOM_KEY)
 
-
+# ************************************************
+# Receives a chat ciphertext and decrypts it
+# @param clientSock - the socket from which to receive
+# @return - plaintext of a chat message
+# *************************************************
 def decryptChatMessage(clientSock):
     encryptedMessage = clientSock.recv(MAXIMUM_CHAT_MESSAGE_LEN)
     return DecodeAES(Cipher, encryptedMessage)
 
+# ************************************************
+# Encrypts a chat message using a RANDOM_KEY as a key
+# @param message - a text to be encrypted
+# @return - encrypted text of a chat message
+# *************************************************
 def encryptChatMessage(message):
     encryptedMessage = EncodeAES(Cipher, message)
     return encryptedMessage
 
 # ************************************************
-# Process after user successfully logged in
+# Process gets called after user successfully logged in
 # @param sock: socket used to connect to a server
+# @param username - username of a currently logged in user
+# @return - none
 # *************************************************
 def process(sock, username):
 
@@ -304,10 +374,11 @@ def process(sock, username):
                         request = rsa.encrypt(CHAT, SERVER_PUBLIC_KEY)                        
                         sendAll(sock, request + encryptChatMessage(msg))
 
-
 # ************************************************
-# Direction
-# ************************************************
+# Displays a menu to a termnial
+# @param - none
+# @return - none
+# *************************************************
 def directionMenu():
 
     print "**************************************************************************"
@@ -320,21 +391,12 @@ def directionMenu():
     print "**************************************************************************"
     print "\n"
 
-def setUserPrivateRSAKeys(username):
-    try:
-        with open(username + "_private_key.pem") as privatefile:
-            keydata = privatefile.read()
-    except:
-        return ""
-
-    return rsa.PrivateKey.load_pkcs1(keydata,'PEM')
-
+# ************************************************
+# Main
+# *************************************************
 if __name__ == "__main__":
 
-    if len(sys.argv) > 1:
-        print "Usage: python client.py"
-        exit(-1)
-
+    # Sets server IP and port number
     serverAddr = "localhost"
     serverPort = 1234
 
@@ -349,6 +411,7 @@ if __name__ == "__main__":
     print "*********************************"
     print ""
 
+    # Handles user logging in
     successSignIn, username = userLogIn()
 
     if successSignIn:
