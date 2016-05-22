@@ -298,7 +298,7 @@ def process(sock, username):
     running = 1
     while running:
         
-        inputready,outputready,exceptready = select.select(input,[],[])
+        inputready,outputready,exceptready = select.select(input,[], [])
 
         for s in inputready:
 
