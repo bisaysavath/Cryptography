@@ -6,7 +6,6 @@ import sys
 import select
 import cPickle
 import rsa
-from Crypto.Cipher import ARC4
 
 MAXIMUM_CHAT_MESSAGE_LEN = 1000
 
@@ -201,6 +200,9 @@ def broadcastMessage(sock):
     getMessage = sock.recv(MAXIMUM_CHAT_MESSAGE_LEN)
     print "User sent: "
     print getMessage
+
+    if not sock in chatMemberList:
+        return
     
     for m in chatMemberList:
         # Send the message only to peers
