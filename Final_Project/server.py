@@ -64,9 +64,11 @@ class User:
             name = a[0]
             password = a[1]
             if name == self.__name and password == self.__password:
-                return True
+                return True, self.__pubKey
+            elif name == self.__name:
+                return False, self.__pubKey
             else:
-                return False
+                return False, ""
 
     def setSocket(self, sock):
         self.sock = sock
@@ -240,24 +242,32 @@ def notifyOfflineMember(name):
 def handleLogin(sock, listOfAccounts):
     status = False
     userAccount = getAccountInfo(sock);
+    returnStatus = FAIL
     userKey = ""
+    anyUserPubKey = ""
     print "User at socket {0} is trying to log in".format(sock)
     for user in listOfAccounts:
-        userKey = user.getPubKey()
-        status = user.verifyAccount(userAccount)
+        status, userKey = user.verifyAccount(userAccount)
+        anyUserPubKey = user.getPubKey()
+        
         if status:
             user.setSocket(sock)
             onlineUsers[sock] = user
             break
-            
-    returnStatus = FAIL
+
+        if userKey != "":
+            break
+
+    # When fail to verify a user, use any user's key to send back
+    if userKey == "":
+        userKey = anyUserPubKey
 
     if status:
         print "Successfully logged in"
         returnStatus = OK
     else:
         print "Failed to log in"
-        
+
     returnStatus = rsa.encrypt(returnStatus, userKey)
     sock.send(returnStatus)
 
