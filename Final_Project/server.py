@@ -207,8 +207,7 @@ def broadcastMessage(sock):
     for m in chatMemberList:
         # Send the message only to peers
         if m != sock :
-            try :
-                
+            try :               
                 # Encrypt a request
                 request = rsa.encrypt(CHAT, onlineUsers[m].getPubKey())
                 
@@ -429,9 +428,10 @@ if __name__ == "__main__":
     # *************************************************
     while running:
 
-        inputready,outputready,exceptready = select.select(input,[],[])
+        inputReady,outputReady,exceptReady = select.select(input,[],input)
 
-        for s in inputready:
+        # Server receives data from the inputReady list
+        for s in inputReady:
 
             if s == welcomeSock:
                 # Handle the server socket
@@ -444,6 +444,7 @@ if __name__ == "__main__":
                 running = 0
 
             else:
+                
                 # Handle all other sockets
                 request = getRequest(s)
 
@@ -478,6 +479,19 @@ if __name__ == "__main__":
                         print username + " logged out."
                     if s in onlineUsers:
                         del onlineUsers[s]
+
+        # A socket is crashed and server catches the exception
+        for s in exceptReady:
+            print "Socket closed"
+            s.close()
+            input.remove(s)
+            if s in chatMemberList:
+                chatMemberList.remove(s)
+                username = onlineUsers[s].getName()
+                notifyOfflineMember(username)
+                print username + " logged out."
+            if s in onlineUsers:
+                del onlineUsers[s]
 
     # Close server socket
     welcomeSock.close()
