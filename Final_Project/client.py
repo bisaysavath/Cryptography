@@ -7,7 +7,6 @@ import cPickle
 import select
 import re
 import rsa
-from Crypto.Cipher import ARC4
 from Crypto.Cipher import AES
 import base64
 
@@ -140,10 +139,10 @@ def userLogIn():
         sendAll(clientSock, request  + preparePacket(accountInfo))
 
         returnStatus = clientSock.recv(64)
-
+        
         global USER_PRIVATE_KEY
         USER_PRIVATE_KEY = setUserPrivateRSAKeys(username)
-
+        
         if (USER_PRIVATE_KEY != ""):
             returnStatus = rsa.decrypt(returnStatus, USER_PRIVATE_KEY)
         else:
