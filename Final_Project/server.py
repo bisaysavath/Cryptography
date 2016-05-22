@@ -6,6 +6,7 @@ import sys
 import select
 import cPickle
 import rsa
+import base64
 
 # Status Codes
 FAIL = "00"
@@ -33,6 +34,14 @@ with open("server_private_key.pem") as privatefile:
     
 SERVER_PRIVATE_KEY = rsa.PrivateKey.load_pkcs1(keydata,'PEM')
 
+with open("server_public_key.pem") as publicfile:
+    keydata = publicfile.read()
+
+SERVER_PUBLIC_KEY = rsa.PublicKey.load_pkcs1(keydata, 'PEM')
+
+    
+
+
 # List of online users
 onlineUsers = {}
 
@@ -47,12 +56,12 @@ randomKey = ""
 # ************************************************
 class User:
 
-    def __init__(self, name, password, sock):
+    def __init__(self, name, password, sock, publicKeyFile):
         self.__name = name
         self.__password = password
         self.sock = sock
         
-        with open(name + "_public_key.pem") as publicfile:
+        with open(publicKeyFile) as publicfile:
             pkeydata = publicfile.read()
             
         self.__pubKey = rsa.PublicKey.load_pkcs1(pkeydata)
@@ -426,12 +435,17 @@ def handleInvitation(sock):
 # ****************************************************
 if __name__ == "__main__":
 
-    # Create some accounts
+    # List of accounts
     listOfAccounts = []
-    listOfAccounts.append(User("Duy", "abc", 0))
-    listOfAccounts.append(User("Tevin", "abc", 0))
-    listOfAccounts.append(User("Billy", "abc", 0))
-    listOfAccounts.append(User("Holly", "abc", 0))
+    
+    # Load the accounts file and store all of the users into listOfAccounts
+    with open('accounts.json', 'r') as f:
+        accounts = f.read()
+        accounts = base64.b64decode(accounts)
+        accounts = cPickle.loads(accounts)
+	
+        for user in accounts['accounts']:
+            listOfAccounts.append(User(user['username'], user['password'], 0, user['keyFile']))
 
     listenPort = 1234
 
