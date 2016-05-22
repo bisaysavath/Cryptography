@@ -7,8 +7,6 @@ import select
 import cPickle
 import rsa
 
-MAXIMUM_CHAT_MESSAGE_LEN = 1000
-
 # Status Codes
 FAIL = "00"
 OK = "01"
@@ -20,7 +18,14 @@ CHECKCHATMEM = "15"
 MEMBEROFFLINE = "16"
 KEY = "17"
 
+
+
+# ************************************************
+# Global variables
+# ************************************************
 USER_PUBLIC_KEY = ""
+
+MAXIMUM_CHAT_MESSAGE_LEN = 1000
 
 # Load server private key
 with open("server_private_key.pem") as privatefile:
@@ -36,7 +41,10 @@ chatMemberList = []
 
 # Random symmetric key used for chatting
 randomKey = ""
-    
+
+# ************************************************
+# Define a user class
+# ************************************************
 class User:
 
     def __init__(self, name, password, sock):
@@ -83,7 +91,6 @@ class User:
 # @param numBytes - the number of bytes to receive
 # @return - the bytes received
 # *************************************************
-
 def recvAll(sock, numBytes):
 
     # The buffer
@@ -128,7 +135,11 @@ def sendAll(sock, fileData):
     return totalSent
 
 # ************************************************
-# Create a header with 10 bytes
+# Creates a 10-byte ciphertext header for data
+# @param header - the string type representing
+# the size of data in decimal
+# @param userKey - user's, who to receive, publickey
+# @return - ciphertext header prepended with 0 to fill out 10 bytes
 # *************************************************
 def prepareHeader(header, userKey):
 
@@ -142,8 +153,12 @@ def prepareHeader(header, userKey):
     return header
 
 # ************************************************
-# Function to add header to data
-# ************************************************
+# Prepares the data to be sent into header and
+# encrypted data packet
+# @param data - data to be sent
+# @param userKey - user's, who to receive, publickey
+# @return - encrypted packet ready to be sent
+# *************************************************
 def preparePacket(data, userKey):
 
     # Encrypt data
