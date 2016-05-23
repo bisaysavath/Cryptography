@@ -116,7 +116,7 @@ def prepareHeader(header):
     # Prepend '0' to make header 10 bytes
     while len(header) < 10:
         header = "0" + header
-    
+
     # Encrypt header data
     header = rsa.encrypt(header, SERVER_PUBLIC_KEY)
 
@@ -129,10 +129,10 @@ def prepareHeader(header):
 # @return - encrypted packet ready to be sent
 # *************************************************
 def preparePacket(data):
-    
+
     # Encrypt data
     data = rsa.encrypt(data, SERVER_PUBLIC_KEY)
-    
+
     dataSize = str(len(data))
     header = prepareHeader(dataSize)
     return header + data
@@ -159,10 +159,10 @@ def userLogIn():
         sendAll(clientSock, request  + preparePacket(accountInfo))
 
         returnStatus = clientSock.recv(64)
-        
+
         global USER_PRIVATE_KEY
         USER_PRIVATE_KEY = setUserPrivateRSAKeys(username)
-        
+
         if (USER_PRIVATE_KEY != ""):
             returnStatus = rsa.decrypt(returnStatus, USER_PRIVATE_KEY)
         else:
@@ -184,18 +184,18 @@ def userLogIn():
 # @return - an original data
 # *************************************************
 def recvRSAPacket(sock):
-    
+
     # Recieve header info
     dataSizeBuff = recvAll(sock, 64)
-    
+
     # Decrypt header and get its size
     dataSizeBuff = rsa.decrypt(dataSizeBuff, USER_PRIVATE_KEY)
     dataSize = int(dataSizeBuff)
-    
+
     # Recieve data and decrypt
     data = recvAll(sock, dataSize)
     data = rsa.decrypt(data, USER_PRIVATE_KEY)
-    
+
     return data
 
 # ************************************************
@@ -222,10 +222,10 @@ def setUserPrivateRSAKeys(username):
 # @return - none
 # *************************************************
 def getOnlineUser(clientSock):
-    
+
     serializedOnlineList = recvRSAPacket(clientSock)
     onlineUserList = cPickle.loads(serializedOnlineList)
-    
+
     print "Online users:"
 
     for user in onlineUserList:
@@ -242,7 +242,7 @@ def getOnlineUser(clientSock):
 def getChatMembers(clientSock):
     serializedChatList = recvRSAPacket(clientSock)
     chatList = cPickle.loads(serializedChatList)
-    
+
     print "Chat members: "
 
     for user in chatList:
@@ -291,13 +291,13 @@ def encryptChatMessage(message):
 def process(sock, username):
 
     input = [sock, sys.stdin]
-    
+
     # *************************************************
     #           WHILE LOOP
     # *************************************************
     running = 1
     while running:
-        
+
         inputready,outputready,exceptready = select.select(input,[], [])
 
         for s in inputready:
@@ -306,7 +306,7 @@ def process(sock, username):
                 # Receive data from the server
                 # get the reponse code
                 response = s.recv(64)
-                
+
                 response = rsa.decrypt(response, USER_PRIVATE_KEY)
 
                 # Server sent the list of online users
@@ -328,11 +328,11 @@ def process(sock, username):
                 # Server responded to check chat members
                 if response == CHECKCHATMEM:
                     getChatMembers(s)
-                    
+
                 # Server sent a random symmetric key to be used for chatting
                 if response == KEY:
                     getRandomKey(s)
-            
+
             elif s == sys.stdin:
                 # Handle standard input
                 msg = sys.stdin.readline().strip()
@@ -364,14 +364,14 @@ def process(sock, username):
                 elif msg == "::chatmem":
                     request = rsa.encrypt(CHECKCHATMEM, SERVER_PUBLIC_KEY)
                     sendAll(sock, request)
-                        
+
                 # Chat message
                 else:
                     message = msg.strip()
                     msg = username + ": " + msg
                     header = str(len(msg))
                     if message:
-                        request = rsa.encrypt(CHAT, SERVER_PUBLIC_KEY)                        
+                        request = rsa.encrypt(CHAT, SERVER_PUBLIC_KEY)
                         sendAll(sock, request + encryptChatMessage(msg))
 
 # ************************************************
@@ -405,7 +405,7 @@ if __name__ == "__main__":
 
     # Connect to the server
     clientSock.connect((serverAddr, serverPort))
-    
+
     print "*********************************"
     print "**   Welcome to What's Chat!   **"
     print "*********************************"

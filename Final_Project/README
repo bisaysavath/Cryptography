@@ -1,0 +1,17 @@
+– Names and email addresses of all partners.
+    Duy Do 				ddo@csu.fullerton.edu
+    Billy Saysavath		bisaysavath@csu.fullerton.edu
+    Tevin Vu			tuanvu01@csu.fullerton.edu
+    Holly Ho			hollyh@csu.fullerton.edu
+
+– The programming language we use
+    Python
+
+– How to complile and execute the program.
+    Run the server side code by running:
+    python server.py
+
+    Run the client side code by running:
+    python client.py
+    
+    Notes: server.py and client.py must be running on the same host machine

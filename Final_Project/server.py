@@ -31,7 +31,7 @@ MAXIMUM_CHAT_MESSAGE_LEN = 1000
 # Load server private key
 with open("server_private_key.pem") as privatefile:
     keydata = privatefile.read()
-    
+
 SERVER_PRIVATE_KEY = rsa.PrivateKey.load_pkcs1(keydata,'PEM')
 
 with open("server_public_key.pem") as publicfile:
@@ -39,7 +39,7 @@ with open("server_public_key.pem") as publicfile:
 
 SERVER_PUBLIC_KEY = rsa.PublicKey.load_pkcs1(keydata, 'PEM')
 
-    
+
 
 
 # List of online users
@@ -60,12 +60,12 @@ class User:
         self.__name = name
         self.__password = password
         self.sock = sock
-        
+
         with open(publicKeyFile) as publicfile:
             pkeydata = publicfile.read()
-            
+
         self.__pubKey = rsa.PublicKey.load_pkcs1(pkeydata)
-    
+
     def getPubKey(self):
         return self.__pubKey
 
@@ -89,10 +89,10 @@ class User:
 
     def setSocket(self, sock):
         self.sock = sock
-        
+
     def getSocket(self):
         return self.sock
-    
+
 # ************************************************
 # Receives the specified number of bytes
 # from the specified socket
@@ -155,7 +155,7 @@ def prepareHeader(header, userKey):
     # Prepend '0' to make header 10 bytes
     while len(header) < 10:
         header = "0" + header
-        
+
     # Encrypt header data with a user public key
     header = rsa.encrypt(header, userKey)
 
@@ -175,7 +175,7 @@ def preparePacket(data, userKey):
 
     dataSize = str(len(data))
     header = prepareHeader(dataSize, userKey)
-    
+
     return header + data
 
 # ************************************************
@@ -202,18 +202,18 @@ def getAccountInfo(sock):
 
     # Get fileNameSize
     accountSizeBuff = recvAll(sock, 64)
-    
+
     # Decrypt header data
     accountSizeBuff = rsa.decrypt(accountSizeBuff, SERVER_PRIVATE_KEY)
-    
+
     accountSize = int(accountSizeBuff)
 
     # Get fileName
     accountInfo = recvAll(sock, accountSize)
-    
+
     # Decrypt userdata
     accountInfo = rsa.decrypt(accountInfo, SERVER_PRIVATE_KEY)
-    
+
     return accountInfo
 
 # ************************************************
@@ -229,14 +229,14 @@ def broadcastMessage(sock):
 
     if not sock in chatMemberList:
         return
-    
+
     for m in chatMemberList:
         # Send the message only to peers
         if m != sock :
-            try :               
+            try :
                 # Encrypt a request
                 request = rsa.encrypt(CHAT, onlineUsers[m].getPubKey())
-                
+
                 sendAll(m, request + getMessage)
             except :
                 # Broken socket connection
@@ -273,7 +273,7 @@ def handleLogin(sock, listOfAccounts):
     for user in listOfAccounts:
         status, userKey = user.verifyAccount(userAccount)
         anyUserPubKey = user.getPubKey()
-        
+
         if status:
             user.setSocket(sock)
             onlineUsers[sock] = user
@@ -304,19 +304,19 @@ def handleCheckOnlineUsers(sock):
 
     onlineUserList = []
     userPubKey = ""
-    
+
     for u in onlineUsers:
         print onlineUsers[u].getName()
         onlineUserList.append(onlineUsers[u].getName())
-        
+
         if onlineUsers[u].getSocket() == sock:
             userPubKey = onlineUsers[u].getPubKey()
 
     serializedOnlineList = cPickle.dumps(onlineUserList)
-    
+
     # Encrypt a request
     request = rsa.encrypt(CHECKSTATUS, userPubKey)
-    
+
     sendAll(sock, request + preparePacket(serializedOnlineList, userPubKey))
 
 # ****************************************************
@@ -333,28 +333,28 @@ def handleCheckChatMembers(sock):
     serializedChatList = cPickle.dumps(chatList)
 
     userPubKey = onlineUsers[sock].getPubKey()
-    
+
     request = rsa.encrypt(CHECKCHATMEM, userPubKey)
     sendAll(sock, request +  preparePacket(serializedChatList, userPubKey))
-        
+
 
 # ****************************************************
 # Decrypt the data using server's private key
 # @param sock: user's socket
 # ****************************************************
 def recvRSAPacket(sock):
-    
+
     # Recieve header info
     dataSizeBuff = recvAll(sock, 64)
-    
+
     # Decrypt header and get its size
     dataSizeBuff = rsa.decrypt(dataSizeBuff, SERVER_PRIVATE_KEY)
     dataSize = int(dataSizeBuff)
-    
+
     # Recieve data and decrypt
     data = recvAll(sock, dataSize)
     data = rsa.decrypt(data, SERVER_PRIVATE_KEY)
-    
+
     return data
 
 # ****************************************************
@@ -364,10 +364,18 @@ def recvRSAPacket(sock):
 def handleInvitation(sock):
 
     found = False
+<<<<<<< HEAD
     isFirstTime = False
+=======
+
+    # Add user to chatMemberList
+    if not sock in chatMemberList:
+        chatMemberList.append(sock)
+
+>>>>>>> e9cd62b88e012a1111865811ed695ccabc6fb5ed
     # Get the user's public key
     userPubKey = onlineUsers[sock].getPubKey()
-    
+
     # Generate the symmetric key with size of 32 bytes (128 bits) to use for chatting
     if len(chatMemberList) == 0:
         global randomKey
@@ -393,13 +401,13 @@ def handleInvitation(sock):
     # Check each name in the list
     for name in Names:
         print "User invites {0} to join chat session".format(name)
-        
+
         # Check name with online users
         for u in onlineUsers:
             if onlineUsers[u].getName() == name.strip() and not u is sock:
                 found = True
                 break
-            
+
         # Found an online user
         if found:
             # The invited user is not in the chatMemberList
@@ -410,7 +418,7 @@ def handleInvitation(sock):
                 chatMemberList.append(u)
                 sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
                 sendAll(sock, rsa.encrypt(KEY, userPubKey) + preparePacket(randomKey, userPubKey))
-                
+
 
                 # Notify the invited user
                 message = "{0} invited you to the chat session".format(onlineUsers[sock].getName())
@@ -422,9 +430,10 @@ def handleInvitation(sock):
             else:
                 message = "{0} is already in the chat session".format(onlineUsers[u].getName())
                 sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
-                
-        # Invited user is not online       
+
+        # Invited user is not online
         else:
+<<<<<<< HEAD
             if onlineUsers[sock].getName() == name.strip():
                 if not isFirstTime:
                     message = "You are already in the chat session"
@@ -434,6 +443,17 @@ def handleInvitation(sock):
                 message = name + " is not online"
                 # Notify the user                     
                 sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))        
+=======
+            # Notify the user
+            message = name + " is not registered"
+
+            for user in listOfAccounts:
+                if user.getName() == name:
+                    message = name + " is not online"
+                    break
+
+            sendAll(sock, rsa.encrypt(INVITE, userPubKey) +  preparePacket(message, userPubKey))
+>>>>>>> e9cd62b88e012a1111865811ed695ccabc6fb5ed
 
         found = False
 
@@ -444,13 +464,13 @@ if __name__ == "__main__":
 
     # List of accounts
     listOfAccounts = []
-    
+
     # Load the accounts file and store all of the users into listOfAccounts
     with open('accounts.json', 'r') as f:
         accounts = f.read()
         accounts = base64.b64decode(accounts)
         accounts = cPickle.loads(accounts)
-	
+
         for user in accounts['accounts']:
             listOfAccounts.append(User(user['username'], user['password'], 0, user['keyFile']))
 
@@ -490,7 +510,7 @@ if __name__ == "__main__":
                 running = 0
 
             else:
-                
+
                 # Handle all other sockets
                 request = getRequest(s)
 
@@ -509,10 +529,10 @@ if __name__ == "__main__":
                 # User sent invitation to online users to chat
                 elif request == INVITE:
                     handleInvitation(s)
-        
+
                 elif request == CHECKCHATMEM:
                     handleCheckChatMembers(s)
-             
+
                 # User's socket is closed
                 else:
                     print "Socket closed"
