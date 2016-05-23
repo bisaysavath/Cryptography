@@ -364,15 +364,8 @@ def recvRSAPacket(sock):
 def handleInvitation(sock):
 
     found = False
-<<<<<<< HEAD
     isFirstTime = False
-=======
 
-    # Add user to chatMemberList
-    if not sock in chatMemberList:
-        chatMemberList.append(sock)
-
->>>>>>> e9cd62b88e012a1111865811ed695ccabc6fb5ed
     # Get the user's public key
     userPubKey = onlineUsers[sock].getPubKey()
 
@@ -433,27 +426,18 @@ def handleInvitation(sock):
 
         # Invited user is not online
         else:
-<<<<<<< HEAD
             if onlineUsers[sock].getName() == name.strip():
                 if not isFirstTime:
                     message = "You are already in the chat session"
                     # Notify the user                     
                     sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
             else:
-                message = name + " is not online"
-                # Notify the user                     
-                sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))        
-=======
-            # Notify the user
-            message = name + " is not registered"
-
-            for user in listOfAccounts:
-                if user.getName() == name:
-                    message = name + " is not online"
-                    break
-
-            sendAll(sock, rsa.encrypt(INVITE, userPubKey) +  preparePacket(message, userPubKey))
->>>>>>> e9cd62b88e012a1111865811ed695ccabc6fb5ed
+                message = name + " is not registered"
+                for user in listOfAccounts:
+                    if user.getName() == name:
+                        message = name + " is not online"
+                        break
+                sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
 
         found = False
 
