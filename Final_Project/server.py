@@ -425,8 +425,6 @@ def handleInvitation(sock):
         # Invited user is not online
         else:
             # Notify the user
-            # message = name + " is not online"
-            # sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
             message = name + " is not registered"
 
             for user in listOfAccounts:
