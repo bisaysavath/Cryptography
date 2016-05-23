@@ -364,19 +364,24 @@ def recvRSAPacket(sock):
 def handleInvitation(sock):
 
     found = False
-    
-    # Add user to chatMemberList
-    if not sock in chatMemberList:
-        chatMemberList.append(sock)
-
+    isFirstTime = False
     # Get the user's public key
     userPubKey = onlineUsers[sock].getPubKey()
     
     # Generate the symmetric key with size of 32 bytes (128 bits) to use for chatting
-    if len(chatMemberList) == 1:
+    if len(chatMemberList) == 0:
         global randomKey
         randomKey = os.urandom(32)
 
+    # Add user to chatMemberList if user is not in there
+    if not sock in chatMemberList:
+        isFirstTime = True
+        chatMemberList.append(sock)
+        # Send the randomKey to user
+        message = "you are now in the chat session"
+        sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
+        sendAll(sock, rsa.encrypt(KEY, userPubKey) + preparePacket(randomKey, userPubKey))
+        
     # Get the string list of names sending from the user
     listOfNames = recvRSAPacket(sock)
 
@@ -391,7 +396,7 @@ def handleInvitation(sock):
         
         # Check name with online users
         for u in onlineUsers:
-            if onlineUsers[u].getName() == name.strip():
+            if onlineUsers[u].getName() == name.strip() and not u is sock:
                 found = True
                 break
             
@@ -415,18 +420,20 @@ def handleInvitation(sock):
 
             # The invited user is already in the chatMemberList
             else:
-                if u is sock:
-                    message = "you are now in the chat session"
-                    sendAll(sock, rsa.encrypt(KEY, userPubKey) + preparePacket(randomKey, userPubKey))
-                else:
-                    message = "{0} is already in the chat session".format(onlineUsers[u].getName())
+                message = "{0} is already in the chat session".format(onlineUsers[u].getName())
                 sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
                 
         # Invited user is not online       
         else:
-            # Notify the user
-            message = name + " is not online"                     
-            sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
+            if onlineUsers[sock].getName() == name.strip():
+                if not isFirstTime:
+                    message = "You are already in the chat session"
+                    # Notify the user                     
+                    sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))
+            else:
+                message = name + " is not online"
+                # Notify the user                     
+                sendAll(sock, rsa.encrypt(INVITE, userPubKey) + preparePacket( message, userPubKey))        
 
         found = False
 
